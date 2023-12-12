@@ -556,6 +556,7 @@ jobs:
     - get: capi-ci
   - in_parallel:
     - task: run-cc-unit-tests-mysql
+      attempts: 3
       tags: [high-compute]
       file: capi-ci/ci/test-unit/run_cc_unit_tests.yml
       privileged: true
@@ -568,6 +569,7 @@ jobs:
           text: '[cc-unit-tests] OH NO! Failed when running with mysql'
           icon_emoji: ((slack_failure_emoji))
     - task: run-cc-unit-tests-postgres
+      attempts: 3
       tags: [high-compute]
       file: capi-ci/ci/test-unit/run_cc_unit_tests.yml
       privileged: true
