@@ -313,7 +313,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/cf-deployment.git
     private_key: ((private_key))
-    branch: release-candidate
+    branch: develop
 
 - name: cf-deployment-main
   type: git
