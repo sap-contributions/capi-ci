@@ -1,0 +1,3337 @@
+# PINNED VERSIONS
+# To pin a version of a git resource, include the commit hash in the list here:
+#
+# version_pins:
+# - &BOSH_DEPLOYMENT_VERSION 3f4466a51a74dadbff6612e7d2b79d2802668469
+#
+# And then reference it whenever you `get` that resource:
+#
+#      - get: bosh-deployment
+#        version: { ref: *BOSH_DEPLOYMENT_VERSION }
+##
+
+groups:
+- name: capi-release
+  jobs:
+  - cc-unit-tests
+  - bridge-unit-tests
+  - verify-capi-release-commits
+  - capi-release-template-tests
+#  - create-capi-release
+#  - bump-capi-release
+#  - mulan-postgres
+#  - elsa-HA
+#  - kiki-back-compat-migrations
+#  - xena-mysql-drats
+#  - gabrielle-postgres-drats
+#  - ripley-nfs
+#  - bump-ci-passed
+#  - bump-bbs-protos
+
+resource_types:
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+- name: terraform
+  type: docker-image
+  source:
+    repository: ljfranklin/terraform-resource
+- name: gcs
+  type: docker-image
+  source:
+    repository: frodenas/gcs-resource
+- name: file-url
+  type: docker-image
+  source:
+    repository: pivotalservices/concourse-curl-resource
+    tag: latest
+- name: cron-resource
+  type: docker-image
+  source:
+    repository: cftoolsmiths/cron-resource
+
+resources:
+# schedules
+#- name: weekly-sunday
+#  type: time
+#  source:
+#    location: America/Los_Angeles
+#    start: 23:00
+#    stop: 23:30
+#    days: [Sunday]
+
+#- name: capi-final-releases
+#  type: s3
+#  source:
+#    bucket: capi-final-releases-app-runtime-interfaces
+#    regexp: capi-(.*).tgz
+#    access_key_id: ((app_runtime_interfaces_capi_ci_access_key))
+#    secret_access_key: ((app_runtime_interfaces_capi_ci_secret_access_key))
+#    region_name: us-east-2
+
+- name: capi-ci
+  type: git
+  source:
+    branch: ari
+    uri: https://github.com/cloudfoundry/capi-ci.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
+#- name: capi-ci-private
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-ci-private.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+
+- name: capi-release-main
+  type: git
+  source:
+    branch: main
+    uri: https://github.com/cloudfoundry/capi-release.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
+#- name: capi-release-ci-passed
+#  type: git
+#  source:
+#    branch: ci-passed
+#    uri: https://github.com/cloudfoundry/capi-release.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+
+
+- name: capi-release-develop
+  type: git
+  source:
+    branch: develop
+    uri: https://github.com/cloudfoundry/capi-release.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
+
+#- name: api-docs
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/api-docs.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+
+
+#- name: capi-release-tarball
+#  type: s3
+#  source:
+#    bucket: capi-releases-app-runtime-interfaces
+#    regexp: capi-(.*)-.*-.*.tgz
+#    access_key_id: ((app_runtime_interfaces_capi_ci_access_key))
+#    secret_access_key: ((app_runtime_interfaces_capi_ci_secret_access_key))
+#    region_name: us-east-2
+
+#- name: next-version
+#  type: semver
+#  source:
+#    access_key_id: ((app_runtime_interfaces_capi_ci_access_key))
+#    secret_access_key: ((app_runtime_interfaces_capi_ci_secret_access_key))
+#    initial_version: 0.0.0
+#    bucket: capi-release-versions-app-runtime-interfaces
+#    key: current-capi-release-version
+#    region_name: us-east-2
+
+#- name: cc-api-v3-version
+#  type: semver
+#  source:
+#    driver: git
+#    branch: main
+#    file: config/version
+#    uri: https://github.com/cloudfoundry/cloud_controller_ng.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+#
+#- name: cc-api-v2-version
+#  type: semver
+#  source:
+#    driver: git
+#    branch: main
+#    file: config/version_v2
+#    uri: https://github.com/cloudfoundry/cloud_controller_ng.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+
+#- name: staticfile-app
+#  type: git
+#  source:
+#    branch: release-candidate
+#    uri: https://github.com/cloudfoundry/cf-acceptance-tests.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#    paths:
+#    - assets/staticfile/**
+
+- name: cc-uploader
+  type: git
+  source:
+    branch: main
+    uri: https://github.com/cloudfoundry/cc-uploader.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
+#- name: github-release
+#  type: github-release
+#  source:
+#    user: cloudfoundry
+#    repository: capi-release
+#    drafts: true
+#    access_token: ((ari-wg-gitbot-token))
+
+#- name: github-published-release
+#  type: github-release
+#  source:
+#    user: cloudfoundry
+#    repository: capi-release
+#    drafts: false
+#    access_token: ((ari-wg-gitbot-token))
+
+#- name: redis-release
+#  type: github-release
+#  source:
+#    owner: redis
+#    repository: redis
+#    access_token: ((ari-wg-gitbot-token))
+#    pre_release: false
+#    semver_constraint: "7.2.x"
+#
+#- name: golang-release
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/bosh-package-golang-release
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#    tag_filter: v*
+
+- name: cloud_controller_ng
+  type: git
+  source:
+    branch: main
+    uri: https://github.com/cloudfoundry/cloud_controller_ng.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
+- name: diego-release
+  type: git
+  source:
+    branch: release
+    uri: https://github.com/cloudfoundry/diego-release.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
+#- name: slack-alert
+#  type: slack-notification
+#  source:
+#    url: ((slack_failure_hook_url))
+#
+#- name: slack-rotation-alert
+#  type: slack-notification
+#  source:
+#    url: ((slack_channel_webhook_for_cert_rotations))
+
+#- name: sync-integration-tests
+#  type: git
+#  source:
+#    branch: master
+#    uri: https://github.com/cloudfoundry/sync-integration-tests.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+
+- name: tps
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/cloudfoundry/tps.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
+#- name: cf-deployment
+#  type: git
+#  source:
+#    uri: https://github.com/cloudfoundry/cf-deployment.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+#- name: cf-deployment-main
+#  type: git
+#  source:
+#    uri: https://github.com/cloudfoundry/cf-deployment.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#    branch: main
+#
+#- name: cf-deployment-release
+#  type: github-release
+#  source:
+#    owner: cloudfoundry
+#    repository: cf-deployment
+#    access_token: ((ari-wg-gitbot-token))
+
+#- name: cf-deployment-concourse-tasks
+#  type: git
+#  source:
+#    branch: main
+#    tag_filter: v15.0.0
+#    private_key: ((private_key))
+#    uri: https://github.com/cloudfoundry/cf-deployment-concourse-tasks.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+
+#- name: cf-acceptance-tests
+#  type: git
+#  source:
+#    branch: release-candidate
+#    uri: https://github.com/cloudfoundry/cf-acceptance-tests.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+
+#- name: cf-cli
+#  type: github-release
+#  source:
+#    owner: cloudfoundry
+#    repository: cli
+#    tag_filter: "v7.*"
+#    pre_release: true
+#    access_token: ((ari-wg-gitbot-token))
+
+#- name: capi-bara-tests
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-bara-tests.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+#- name: bbr-github-release
+#  type: github-release
+#  source:
+#    owner: cloudfoundry-incubator
+#    repository: bosh-backup-and-restore
+#    access_token: ((ari-wg-gitbot-token))
+
+#- name: runtime-ci
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/runtime-ci.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+#- name: gcp-xenial-stemcell
+#  type: bosh-io-stemcell
+#  source:
+#    name: bosh-google-kvm-ubuntu-xenial-go_agent
+#
+#- name: bosh-deployment
+#  type: git
+#  source:
+#    branch: master
+#    uri: https://github.com/cloudfoundry/bosh-deployment.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+## Mulan resources
+#- name: mulan-bbl-state
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-ci-private.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+#- name: mulan-integration-configs
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-ci-private.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+## Ripley resources
+#- name: ripley-bbl-state
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-ci-private.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+#- name: ripley-integration-configs
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-ci-private.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+## Elsa resources
+#- name: elsa-bbl-state
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-ci-private.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+#- name: elsa-integration-configs
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-ci-private.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+
+#- name: elsa-aws-storage-terraform
+#  type: terraform
+#  source:
+#    storage:
+#      bucket: ((elsa_bosh_vars_bucket))
+#      bucket_path: aws-storage
+#      access_key_id: ((gcp_storage_access_key))
+#      secret_access_key: ((gcp_storage_secret_key))
+#      endpoint: storage.googleapis.com
+
+## Kiki resources
+#- name: kiki-bbl-state
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-ci-private.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+#- name: kiki-integration-configs
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-ci-private.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+## Xena resources
+#- name: xena-mysql-bbl-state
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-ci-private.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+#- name: gabrielle-postgres-bbl-state
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-ci-private.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+## Leia resources
+#- name: leia-azure-storage-bbl-state
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-ci-private.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+#- name: leia-azure-storage-integration-configs
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-ci-private.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))t
+#
+## Rey resources (aka "reysources") WINK
+#- name: rey-gcs-storage-bbl-state
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-ci-private.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+#
+#- name: rey-gcs-storage-integration-configs
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry/capi-ci-private.git
+#    username: ((ari-wg-gitbot-username))
+#    password: ((ari-wg-gitbot-token))
+
+#- name: drats
+#  type: git
+#  source:
+#    branch: main
+#    uri: https://github.com/cloudfoundry-incubator/disaster-recovery-acceptance-tests
+
+jobs:
+#- name: autobump-golang-package
+#  plan:
+#  - in_parallel:
+#      - get: capi-ci
+#      - get: capi-ci-private
+#      - get: capi-release
+#        resource: capi-release-develop
+#      - get: golang-release
+#        trigger: true
+#  - task: update-golang-package
+#    params:
+#      GO_VERSION: 1
+#      PRIVATE_YAML: ((capi_release_private_yaml))
+#    file: capi-ci/ci/update-packages/update_golang_package.yml
+#  - put: capi-release-develop
+#    params:
+#      repository: updated-capi-release
+
+#- name: bump-redis-blob
+#  plan:
+#  - in_parallel:
+#    - get: redis-release
+#      trigger: true
+#      params:
+#        include_source_tarball: true
+#
+#    - get: capi-release
+#      resource: capi-release-develop
+#      trigger: false
+#    - get: capi-ci
+#
+#  - task: update-redis-blob
+#    params:
+#      PRIVATE_YAML: ((capi_release_private_yaml))
+#    file: capi-ci/ci/update-packages/update_redis_blob.yml
+#
+#  - put: capi-release-develop
+#    params:
+#      repository: updated-capi-release
+
+- name: cc-unit-tests
+  plan:
+  - in_parallel:
+    - get: cloud_controller_ng
+      trigger: true
+    - get: capi-ci
+  - in_parallel:
+    - task: run-cc-unit-tests-mysql
+      attempts: 3
+      file: capi-ci/ci/test-unit/run_cc_unit_tests.yml
+      privileged: true
+      params:
+        DB: mysql
+        RUN_IN_PARALLEL: true
+#      on_failure:
+#        put: slack-alert
+#        params:
+#          text: '[cc-unit-tests] OH NO! Failed when running with mysql'
+    - task: run-cc-unit-tests-postgres
+      attempts: 3
+      file: capi-ci/ci/test-unit/run_cc_unit_tests.yml
+      privileged: true
+      params:
+        DB: postgres
+        RUN_IN_PARALLEL: true
+#      on_failure:
+#        put: slack-alert
+#        params:
+#          text: '[cc-unit-tests] OH NO! Failed when running with postgres'
+
+- name: verify-capi-release-commits
+  plan:
+  - in_parallel:
+    - get: capi-ci
+    - get: capi-release
+      resource: capi-release-develop
+      trigger: true
+    - get: capi-release-main
+      trigger: true
+  - task: run-capi-release-commit-test
+    file: capi-ci/ci/test-unit/run_capi_release_commit_test.yml
+#    on_failure:
+#      put: slack-alert
+#      params:
+#        text: "[verify-capi-release-commits] OH NO! There's a bad commit on capi-release"
+
+- name: capi-release-template-tests
+  plan:
+  - in_parallel:
+    - get: capi-ci
+    - get: capi-release
+      resource: capi-release-develop
+      trigger: true
+  - in_parallel:
+    - task: run-config-template-tests
+      file: capi-ci/ci/test-unit/run_capi_release_config_template_tests.yml
+
+#- name: bump-capi-release
+#  plan:
+#  - in_parallel:
+#    - get: capi-ci
+#    - get: capi-release
+#      resource: capi-release-develop
+#      passed: [verify-capi-release-commits]
+#      trigger: true
+#    - get: cloud_controller_ng
+#      passed: [cc-unit-tests]
+#      trigger: true
+#    - get: diego-release
+#      passed: [bridge-unit-tests]
+#      params:
+#        submodules:
+#        - src/code.cloudfoundry.org/bbs
+#        - src/code.cloudfoundry.org/lager
+#        - src/code.cloudfoundry.org/locket
+#    - get: cc-uploader
+#      passed: [bridge-unit-tests]
+#      trigger: true
+#    - get: tps
+#      passed: [bridge-unit-tests]
+#      trigger: true
+#  - task: bump-capi-release
+#    file: capi-ci/ci/git/bump_capi_release.yml
+#  - put: capi-release-develop
+#    params:
+#      repository: bumped/capi-release
+#      rebase: true
+
+#- name: bump-bbs-protos
+#  plan:
+#  - in_parallel:
+#    - get: capi-ci
+#    - get: capi-release
+#      resource: capi-release-develop
+#      passed: [verify-capi-release-commits]
+#    - get: diego-release
+#      trigger: true
+#    - get: cloud_controller_ng
+#      passed: [cc-unit-tests]
+#  - task: bump-bbs-protos
+#    file: capi-ci/ci/protos/bump_bbs_protos.yml
+#  - put: cloud_controller_ng
+#    params:
+#      repository: bumped/cloud_controller_ng
+#      rebase: true
+
+- name: bridge-unit-tests
+  plan:
+  - in_parallel:
+#    - get: weekly-sunday
+#      trigger: true
+    - get: capi-release
+      resource: capi-release-develop
+      trigger: true
+    - get: cc-uploader
+      trigger: true
+    - get: tps
+      trigger: true
+    - get: capi-ci
+    - get: diego-release
+      params:
+        submodules:
+        - src/code.cloudfoundry.org/bbs
+        - src/code.cloudfoundry.org/locket
+  - task: run-bridge-unit-tests
+    file: capi-ci/ci/test-unit/run_bridge_unit_tests.yml
+
+#- name: create-capi-release
+#  serial_groups: [version]
+#  serial: true
+#  plan:
+#  - in_parallel:
+#    - get: capi-release
+#      resource: capi-release-develop
+#      passed: [bump-capi-release, capi-release-template-tests]
+#      trigger: true
+#    - get: capi-ci
+#    - get: next-version
+#      resource: next-version
+#      params:
+#        pre: rc
+#    - get: cloud_controller_ng
+#      passed: [bump-capi-release]
+#  - put: next-version
+#    params:
+#      file: next-version/version
+#    on_failure:
+#      put: slack-alert
+#      params:
+#        text: '[create-capi-release] OH NO! Failed to update version'
+#  - task: create-release-tarball
+#    file: capi-ci/ci/bosh/create_capi_release.yml
+#    on_failure:
+#      put: slack-alert
+#      params:
+#        text: '[create-capi-release] OH NO! Failed to create tarball'
+#  - put: capi-release-tarball
+#    params:
+#      file: created-capi-release/capi-*.tgz
+#    on_failure:
+#      put: slack-alert
+#      params:
+#        text: '[create-capi-release] OH NO! Failed to upload tarball'
+
+#- name: update-bosh-mulan
+#  serial: true
+#  serial_groups: [mulan]
+#  plan:
+#  - in_parallel:
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: mulan-bbl-state
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: bosh-deployment
+#    - get: weekly-sunday
+#      trigger: true
+#  - task: seed-capi-ci-private
+#    file: capi-ci/ci/setup-environment/seed.yml
+#    params:
+#      ENVIRONMENT: mulan
+#      DOMAIN: &mulan-domain "mulan.capi.land"
+#  - put: capi-ci-private
+#    params:
+#      repository: updated-capi-ci-private
+#      rebase: true
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: bosh-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: bosh-director-operations/increase-persistent-disk.yml
+#  - task: update-bosh-mulan
+#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#      bbl-config: updated-capi-ci-private
+#    params: &update-bosh-mulan-params
+#      BBL_STATE_DIR: "mulan"
+#      BBL_IAAS: "gcp"
+#      BBL_LB_CERT: "certs/load-balancer/server.crt"
+#      BBL_LB_KEY: "certs/load-balancer/server.key"
+#      LB_DOMAIN: *mulan-domain
+#      BBL_ENV_NAME: "mulan"
+#      BBL_GCP_SERVICE_ACCOUNT_KEY: ((mulan_gcp_json_key))
+#      BBL_GCP_PROJECT_ID: ((mulan_gcp_project_id))
+#      BBL_GCP_ZONE: ((mulan_gcp_zone))
+#      BBL_GCP_REGION: ((mulan_gcp_region))
+#      OPS_FILES: |
+#        base-ops-files/local-dns.yml
+#        increase-persistent-disk.yml
+#    ensure:
+#      put: mulan-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#  - task: create-dns-record
+#    attempts: 5
+#    file: capi-ci/ci/bbl-tasks/create-dns-record.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#    params:
+#      BBL_STATE_DIR: "mulan"
+#      DNS_DOMAIN: *mulan-domain
+#      GCP_DNS_SERVICE_ACCOUNT_KEY: ((dns_gcp_json_key))
+#      GCP_PROJECT_ID: ((dns_gcp_project_id))
+#      SHARED_DNS_ZONE_NAME: "capi-land"
+#  - task: run-bosh-cleanup
+#    file: capi-ci/ci/bbl-tasks/run-bosh-cleanup.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#    params:
+#      BBL_STATE_DIR: "mulan"
+
+##- name: update-bosh-ripley
+##  serial: true
+##  serial_groups: [ripley]
+##  plan:
+##  - in_parallel:
+##    - get: cf-deployment-concourse-tasks
+##      resource: cf-deployment-concourse-tasks
+##    - get: ripley-bbl-state
+##    - get: capi-ci
+##    - get: capi-ci-private
+##    - get: weekly-sunday
+##      trigger: true
+##  - task: seed-capi-ci-private
+##    file: capi-ci/ci/setup-environment/seed.yml
+##    params:
+##      ENVIRONMENT: ripley
+##      DOMAIN: &ripley-domain "ripley.capi.land"
+##  - put: capi-ci-private
+##    params:
+##      repository: updated-capi-ci-private
+##      rebase: true
+##  - task: update-bosh-ripley
+##    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+##    input_mapping:
+##      bbl-state: updated-capi-ci-private
+##      bbl-config: updated-capi-ci-private
+##      ops-files: capi-ci
+##    params: &update-bosh-ripley-params
+##      BBL_STATE_DIR: "ripley"
+##      BBL_IAAS: "gcp"
+##      BBL_LB_CERT: "certs/load-balancer/server.crt"
+##      BBL_LB_KEY: "certs/load-balancer/server.key"
+##      LB_DOMAIN: *ripley-domain
+##      BBL_ENV_NAME: "ripley"
+##      BBL_GCP_SERVICE_ACCOUNT_KEY: ((ripley_gcp_json_key))
+##      BBL_GCP_PROJECT_ID: ((ripley_gcp_project_id))
+##      BBL_GCP_ZONE: ((ripley_gcp_zone))
+##      BBL_GCP_REGION: ((ripley_gcp_region))
+##      OPS_FILES: |
+##        bosh-director-operations/increase-persistent-disk.yml
+##    ensure:
+##      put: ripley-bbl-state
+##      params:
+##        repository: updated-bbl-state
+##        rebase: true
+##  - task: create-dns-record
+##    attempts: 5
+##    file: capi-ci/ci/bbl-tasks/create-dns-record.yml
+##    input_mapping:
+##      bbl-state: updated-bbl-state
+##    params:
+##      BBL_STATE_DIR: "ripley"
+##      DNS_DOMAIN: *ripley-domain
+##      GCP_DNS_SERVICE_ACCOUNT_KEY: ((dns_gcp_json_key))
+##      GCP_PROJECT_ID: ((dns_gcp_project_id))
+##      SHARED_DNS_ZONE_NAME: "capi-land"
+##  - task: run-bosh-cleanup
+##    file: capi-ci/ci/bbl-tasks/run-bosh-cleanup.yml
+##    input_mapping:
+##      bbl-state: updated-bbl-state
+##    params:
+##      BBL_STATE_DIR: "ripley"
+#
+#- name: update-bosh-elsa
+#  serial: true
+#  serial_groups: [elsa]
+#  plan:
+#  - in_parallel:
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: elsa-bbl-state
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: bosh-deployment
+#    - get: weekly-sunday
+#      trigger: true
+#  - task: seed-capi-ci-private
+#    file: capi-ci/ci/setup-environment/seed.yml
+#    params:
+#      ENVIRONMENT: elsa
+#      DOMAIN:   &elsa-domain "elsa.capi.land"
+#  - put: capi-ci-private
+#    params:
+#      repository: updated-capi-ci-private
+#      rebase: true
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: bosh-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: bosh-director-operations/increase-persistent-disk.yml
+#  - task: update-bosh-elsa
+#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#      bbl-config: updated-capi-ci-private
+#    params: &update-bosh-elsa-params
+#      BBL_STATE_DIR: "elsa"
+#      BBL_IAAS: "gcp"
+#      BBL_LB_CERT: "certs/load-balancer/server.crt"
+#      BBL_LB_KEY: "certs/load-balancer/server.key"
+#      LB_DOMAIN: *elsa-domain
+#      BBL_ENV_NAME: "elsa"
+#      BBL_GCP_SERVICE_ACCOUNT_KEY: ((elsa_gcp_json_key))
+#      BBL_GCP_PROJECT_ID: ((elsa_gcp_project_id))
+#      BBL_GCP_ZONE: ((elsa_gcp_zone))
+#      BBL_GCP_REGION: ((elsa_gcp_region))
+#      OPS_FILES: &elsa-HA-bbl-ops |
+#        base-ops-files/local-dns.yml
+#        increase-persistent-disk.yml
+#    ensure:
+#      put: elsa-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#  - task: create-dns-record
+#    attempts: 5
+#    file: capi-ci/ci/bbl-tasks/create-dns-record.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#    params:
+#      BBL_STATE_DIR: "elsa"
+#      DNS_DOMAIN: *elsa-domain
+#      GCP_DNS_SERVICE_ACCOUNT_KEY: ((dns_gcp_json_key))
+#      GCP_PROJECT_ID: ((dns_gcp_project_id))
+#      SHARED_DNS_ZONE_NAME: "capi-land"
+#  - task: run-bosh-cleanup
+#    file: capi-ci/ci/bbl-tasks/run-bosh-cleanup.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#    params:
+#      BBL_STATE_DIR: "elsa"
+#  - task: add-bosh-dns-runtime-config
+#    file: capi-ci/ci/bbl-tasks/update-runtime-config.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#    params:
+#      BBL_STATE_DIR: "elsa"
+#      RUNTIME_CONFIG_PATH: "bosh-deployment/runtime-configs/dns.yml"
+#      RUNTIME_CONFIG_NAME: "dns"
+#
+#- name: update-bosh-kiki
+#  serial: true
+#  serial_groups: [kiki]
+#  plan:
+#  - in_parallel:
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: weekly-sunday
+#      trigger: true
+#  - task: seed-capi-ci-private
+#    file: capi-ci/ci/setup-environment/seed.yml
+#    params:
+#      ENVIRONMENT: kiki
+#      DOMAIN: &kiki-domain "kiki.capi.land"
+#  - put: capi-ci-private
+#    params:
+#      repository: updated-capi-ci-private
+#      rebase: true
+#  - task: update-bosh-kiki
+#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#      bbl-config: updated-capi-ci-private
+#      ops-files: capi-ci
+#    params: &update-bosh-kiki-params
+#      BBL_STATE_DIR: "kiki"
+#      BBL_IAAS: "gcp"
+#      BBL_LB_CERT: "certs/load-balancer/server.crt"
+#      BBL_LB_KEY: "certs/load-balancer/server.key"
+#      BBL_CONFIG_DIR: "kiki/plan-patch"
+#      LB_DOMAIN: *kiki-domain
+#      BBL_ENV_NAME: "kiki"
+#      BBL_GCP_SERVICE_ACCOUNT_KEY: ((kiki_gcp_json_key))
+#      BBL_GCP_PROJECT_ID: ((kiki_gcp_project_id))
+#      BBL_GCP_ZONE: ((kiki_gcp_zone))
+#      BBL_GCP_REGION: ((kiki_gcp_region))
+#      OPS_FILES: |
+#        bosh-director-operations/increase-persistent-disk.yml
+#    ensure:
+#      put: kiki-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#  - task: create-dns-record
+#    attempts: 5
+#    file: capi-ci/ci/bbl-tasks/create-dns-record.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#    params:
+#      BBL_STATE_DIR: "kiki"
+#      DNS_DOMAIN: *kiki-domain
+#      GCP_DNS_SERVICE_ACCOUNT_KEY: ((dns_gcp_json_key))
+#      GCP_PROJECT_ID: ((dns_gcp_project_id))
+#      SHARED_DNS_ZONE_NAME: "capi-land"
+#  - task: run-bosh-cleanup
+#    file: capi-ci/ci/bbl-tasks/run-bosh-cleanup.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#    params:
+#      BBL_STATE_DIR: "kiki"
+
+#- name: mulan-postgres
+#  serial: true
+#  serial_groups: [mulan]
+#  plan:
+#  - in_parallel:
+#    - get: cloud_controller_ng
+#      passed: [create-capi-release]
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: cf-deployment
+#      resource: cf-deployment
+#    - get: capi-release
+#      resource: capi-release-develop
+#      passed: [create-capi-release]
+#    - get: mulan-bbl-state
+#    - get: mulan-integration-configs
+#    - get: cf-acceptance-tests
+#    - get: sync-integration-tests
+#    - get: capi-bara-tests
+#    - get: cf-cli
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: capi-release-tarball
+#      passed: [create-capi-release]
+#      trigger: true
+#  - task: upload-capi-release-tarball
+#    file: capi-ci/ci/bosh/upload-release.yml
+#    input_mapping:
+#      bbl-state: mulan-bbl-state
+#      release-tarball: capi-release-tarball
+#    params:
+#      BBL_STATE_DIR: "mulan"
+#  - task: mulan-stemcell-upload
+#    file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
+#    input_mapping:
+#      bbl-state: mulan-bbl-state
+#    params:
+#      BBL_STATE_DIR: "mulan"
+#  - task: extract-bbl-environment
+#    file: capi-ci/ci/bbl-tasks/extract_bbl_environment.yml
+#    params:
+#      ENV_NAME: mulan
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: &mulan-ops-to-collect |
+#        cf-deployment-operations/skip-cert-verify.yml
+#        cf-deployment-operations/use-latest-capi.yml
+#        cf-deployment-operations/scale-up-cells.yml
+#        cf-deployment-operations/scale-up-dopplers.yml
+#        cf-deployment-operations/performance/scale-generic-worker-processes.yml
+#        cf-deployment-operations/seed-credhub-asg.yml
+#        cf-deployment-operations/disable-credhub-interpolate-service-bindings.yml
+#        cf-deployment-operations/temporary/disable-uaa-get-requests.yml
+#        cf-deployment-operations/enable-cef-security-event-logging.yml
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: "mulan"
+#      SYSTEM_DOMAIN: *mulan-domain
+#      OPS_FILES: &mulan-ops-files |
+#        base-ops-files/operations/add-persistent-isolation-segment-diego-cell.yml
+#        base-ops-files/operations/use-compiled-releases.yml
+#        skip-cert-verify.yml
+#        use-latest-capi.yml
+#        base-ops-files/operations/scale-to-one-az.yml
+#        base-ops-files/operations/test/scale-to-one-az-addon-parallel-cats.yml
+#        scale-up-cells.yml
+#        scale-up-dopplers.yml
+#        scale-generic-worker-processes.yml
+#        seed-credhub-asg.yml
+#        base-ops-files/operations/use-postgres.yml
+#        base-ops-files/operations/experimental/enable-tls-cloud-controller-postgres.yml
+#        base-ops-files/operations/test/speed-up-dynamic-asgs.yml
+#        disable-credhub-interpolate-service-bindings.yml
+#        disable-uaa-get-requests.yml
+#        enable-cef-security-event-logging.yml
+#  - task: updated-integration-configs
+#    file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+#    input_mapping:
+#      bbl-state: mulan-bbl-state
+#      integration-configs: mulan-integration-configs
+#    params:
+#      BBL_STATE_DIR: "mulan"
+#      CATS_INTEGRATION_CONFIG_FILE: "mulan/cats_integration_config.json"
+#      SYSTEM_DOMAIN: *mulan-domain
+#    ensure:
+#      put: mulan-integration-configs
+#      params:
+#        repository: updated-integration-configs
+#        rebase: true
+#  - task: updated-baras-integration-configs
+#    file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      integration-configs: updated-integration-configs
+#    params:
+#      BBL_STATE_DIR: "mulan"
+#      CATS_INTEGRATION_CONFIG_FILE: "mulan/baras_integration_config.json"
+#      SYSTEM_DOMAIN: *mulan-domain
+#    ensure:
+#      put: mulan-integration-configs
+#      params:
+#        repository: updated-integration-configs
+#        rebase: true
+#  - task: enable-feature-flags
+#    file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
+#    input_mapping:
+#      bbl-state: mulan-bbl-state
+#    params:
+#      BBL_STATE_DIR: "mulan"
+#      SYSTEM_DOMAIN: *mulan-domain
+#      ENABLED_FEATURE_FLAGS: "diego_docker"
+#  - task: cleanup-acceptance-test-leftovers
+#    file: capi-ci/ci/acceptance-test-utils/cats_cleanup.yml
+#    params:
+#      CF_API_TARGET: &mulan-api-url https://api.mulan.capi.land
+#      BBL_STATE_DIR: mulan
+#  - in_parallel:
+#    - task: acceptance-tests
+#      file: cf-deployment-concourse-tasks/run-cats/task.yml
+#      input_mapping:
+#        integration-config: updated-integration-configs
+#      params:
+#        NODES: 6
+#        CONFIG_FILE_PATH: "mulan/cats_integration_config.json"
+#        CAPTURE_LOGS: true
+#    - task: capi-bara-tests
+#      file: capi-ci/ci/baras/run-baras.yml
+#      input_mapping:
+#        integration-config: updated-integration-configs
+#      params:
+#        NODES: 2
+#        FLAKE_ATTEMPTS: 2
+#        CONFIG_FILE_PATH: "mulan/baras_integration_config.json"
+#    - task: sync-integration-tests
+#      file: sync-integration-tests/concourse/task_with_credhub.yml
+#      input_mapping:
+#        environment: capi-ci-private
+#      params:
+#        BOSH_DEPLOYMENT_NAME: cf
+#        BOSH_API_INSTANCE: api/0
+#        CF_API_TARGET: *mulan-api-url
+#        CF_SKIP_SSL_VALIDATION: true
+#        CF_APPS_DOMAIN: *mulan-domain
+#        BBL_STATE_DIR: mulan
+#        USE_CREDHUB: true
+#        RUN_REVISIONS_TESTS: true
+#  - task: run-blobstore-benchmarks
+#    file: capi-ci/ci/benchmarks/run-blobstore-benchmarks.yml
+#    params:
+#      BBL_STATE_DIR: mulan
+#
+#- name: ripley-nfs
+#  serial: true
+#  serial_groups: [ripley]
+#  plan:
+#  - in_parallel:
+#    - get: cloud_controller_ng
+#      passed: [create-capi-release]
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: cf-deployment
+#      resource: cf-deployment
+#    - get: capi-release
+#      resource: capi-release-develop
+#      passed: [create-capi-release]
+#    - get: ripley-bbl-state
+#    - get: ripley-integration-configs
+#    - get: cf-acceptance-tests
+#    - get: sync-integration-tests
+#    - get: gcp-xenial-stemcell
+#    - get: runtime-ci
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: capi-release-tarball
+#      passed: [create-capi-release]
+#      trigger: true
+#  - task: upload-capi-release-tarball
+#    file: capi-ci/ci/bosh/upload-release.yml
+#    input_mapping:
+#      bbl-state: ripley-bbl-state
+#      release-tarball: capi-release-tarball
+#    params:
+#      BBL_STATE_DIR: "ripley"
+#  - task: ripley-linux-stemcell-upload
+#    file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
+#    input_mapping:
+#      bbl-state: ripley-bbl-state
+#    params:
+#      BBL_STATE_DIR: "ripley"
+#  - task: extract-bbl-environment
+#    file: capi-ci/ci/bbl-tasks/extract_bbl_environment.yml
+#    params:
+#      ENV_NAME: ripley
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: &ripley-ops-to-collect |
+#        cf-deployment-operations/scale-up-cells.yml
+#        cf-deployment-operations/scale-up-dopplers.yml
+#        cf-deployment-operations/performance/scale-generic-worker-processes.yml
+#        cf-deployment-operations/use-latest-capi.yml
+#        cf-deployment-operations/use-nfs-blobstore.yml
+#        cf-deployment-operations/skip-cert-verify.yml
+#        cf-deployment-operations/temporary/disable-uaa-get-requests.yml
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: "ripley"
+#      SYSTEM_DOMAIN: *ripley-domain
+#      OPS_FILES: &ripley-ops-files |
+#        base-ops-files/operations/add-persistent-isolation-segment-diego-cell.yml
+#        base-ops-files/operations/scale-to-one-az.yml
+#        base-ops-files/operations/test/scale-to-one-az-addon-parallel-cats.yml
+#        scale-up-cells.yml
+#        scale-up-dopplers.yml
+#        scale-generic-worker-processes.yml
+#        base-ops-files/operations/use-compiled-releases.yml
+#        base-ops-files/operations/test/speed-up-dynamic-asgs.yml
+#        use-latest-capi.yml
+#        use-nfs-blobstore.yml
+#        skip-cert-verify.yml
+#        disable-uaa-get-requests.yml
+#        base-ops-files/operations/experimental/use-mysql-version-8.0.yml
+#  - task: updated-integration-configs
+#    file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+#    input_mapping:
+#      integration-configs: ripley-integration-configs
+#      bbl-state: ripley-bbl-state
+#    params:
+#      CATS_INTEGRATION_CONFIG_FILE: "ripley/cats_integration_config.json"
+#      SYSTEM_DOMAIN: *ripley-domain
+#      BBL_STATE_DIR: "ripley"
+#    ensure:
+#      put: ripley-integration-configs
+#      params:
+#        repository: updated-integration-configs
+#        rebase: true
+#  - task: enable-feature-flags
+#    file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
+#    input_mapping:
+#      bbl-state: ripley-bbl-state
+#    params:
+#      SYSTEM_DOMAIN: *ripley-domain
+#      ENABLED_FEATURE_FLAGS: "diego_docker"
+#      BBL_STATE_DIR: "ripley"
+#  - task: cleanup-acceptance-test-leftovers
+#    file: capi-ci/ci/acceptance-test-utils/cats_cleanup.yml
+#    params:
+#      CF_API_TARGET: &ripley-api-url https://api.ripley.capi.land
+#      BBL_STATE_DIR: ripley
+#  - in_parallel:
+#    - task: acceptance-tests
+#      file: cf-deployment-concourse-tasks/run-cats/task.yml
+#      input_mapping:
+#        integration-config: updated-integration-configs
+#      params:
+#        NODES: 6
+#        CONFIG_FILE_PATH: "ripley/cats_integration_config.json"
+#        CAPTURE_LOGS: true
+#    - task: sync-integration-tests
+#      file: sync-integration-tests/concourse/task_with_credhub.yml
+#      input_mapping:
+#        environment: capi-ci-private
+#      params:
+#        BOSH_DEPLOYMENT_NAME: cf
+#        BOSH_API_INSTANCE: api/0
+#        CF_API_TARGET: *ripley-api-url
+#        CF_SKIP_SSL_VALIDATION: true
+#        CF_APPS_DOMAIN: *ripley-domain
+#        BBL_STATE_DIR: ripley
+#        USE_CREDHUB: true
+#        RUN_REVISIONS_TESTS: true
+#  - task: run-blobstore-benchmarks
+#    file: capi-ci/ci/benchmarks/run-blobstore-benchmarks.yml
+#    params:
+#      BBL_STATE_DIR: ripley
+#
+#- name: rotate-certs-ripley
+#  serial: true
+#  serial_groups: [ripley]
+#  plan:
+#  - in_parallel:
+#    - get: ripley-bbl-state
+#    - get: capi-ci-private
+#    - get: capi-ci
+#    - get: cf-deployment-concourse-tasks
+#    - get: cf-deployment
+#    - get: thirtyfirstly
+#      trigger: true
+#  - task: disable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    params:
+#      ENVIRONMENT: ripley
+#      ON_OR_OFF: off
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: *ripley-ops-to-collect
+#  - task: delete-certs
+#    file: capi-ci/ci/bbl-tasks/delete-certs.yml
+#    params:
+#      ENVIRONMENT: ripley
+#  - put: capi-ci-private
+#    params:
+#      repository: updated-capi-ci-private
+#      rebase: true
+#  - task: update-bosh-ripley
+#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#      bbl-config: updated-capi-ci-private
+#    params: *update-bosh-ripley-params
+#    ensure:
+#      put: ripley-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: ripley
+#      SYSTEM_DOMAIN: *ripley-domain
+#      OPS_FILES: *ripley-ops-files
+#      BOSH_DEPLOY_ARGS: "--recreate --fix"
+#  - task: enable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    input_mapping:
+#      capi-ci-private: updated-bbl-state
+#    params:
+#      ENVIRONMENT: ripley
+#      ON_OR_OFF: on
+
+#- name: elsa-HA
+#  serial: true
+#  serial_groups: [elsa]
+#  plan:
+#  - in_parallel:
+#    - get: cloud_controller_ng
+#      passed: [create-capi-release]
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: cf-deployment
+#      resource: cf-deployment
+#    - get: capi-release
+#      resource: capi-release-develop
+#      passed: [create-capi-release]
+#    - get: elsa-bbl-state
+#    - get: elsa-integration-configs
+#    - get: cf-acceptance-tests
+#    - get: sync-integration-tests
+#    - get: capi-bara-tests
+#    - get: cf-cli
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: capi-release-tarball
+#      passed: [create-capi-release]
+#      trigger: true
+#  - task: upload-capi-release-tarball
+#    file: capi-ci/ci/bosh/upload-release.yml
+#    input_mapping:
+#      bbl-state: elsa-bbl-state
+#      release-tarball: capi-release-tarball
+#    params:
+#      BBL_STATE_DIR: "elsa"
+#  - put: elsa-aws-storage-terraform
+#    params:
+#      env_name: elsa
+#      terraform_source: capi-ci/terraform/aws-s3-buckets/
+#      vars:
+#        aws_access_key: ((app_runtime_interfaces_elsa_access_key))
+#        aws_secret_key: ((app_runtime_interfaces_elsa_secret_access_key))
+#        cdn_key_pair_id: ((app_runtime_interfaces_elsa_cdn_key_pair_id))
+#        cdn_private_key: ((app_runtime_interfaces_elsa_cdn_private_key))
+#  - task: create-elsa-vars-files
+#    file: capi-ci/ci/bosh/create-elsa-vars-files.yml
+#    params:
+#      NEW_RELIC_LICENSE_KEY: ((new_relic_license_key))
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: &elsa-ops-files-to-collect |
+#        cf-deployment-operations/skip-cert-verify-on-windows-cell.yml
+#        cf-deployment-operations/rotate-cc-database-key/add-database-encryption-keys.yml
+#        cf-deployment-operations/scale-up-cells.yml
+#        cf-deployment-operations/performance/scale-generic-worker-processes.yml
+#        cf-deployment-operations/use-latest-capi.yml
+#        cf-deployment-operations/use-s3-and-cdn-storage.yml
+#        cf-deployment-operations/add-new-relic.yml
+#        cf-deployment-operations/disable-skip-cert-verify.yml
+#        cf-deployment-operations/disable-skip-cert-verify-iso-seg.yml
+#        cf-deployment-operations/temporary/disable-uaa-get-requests.yml
+#        cf-deployment-operations/seed-credhub-asg.yml
+#        cf-deployment-operations/seed-uaa-asg.yml
+#  - task: collect-private-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: collected-ops-files
+#      new-ops-files: capi-ci-private
+#    params:
+#      NEW_OPS_FILES: elsa/telemetry.yml
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private-with-extra
+#    params:
+#      BBL_STATE_DIR: "elsa"
+#      SYSTEM_DOMAIN: *elsa-domain
+#      OPS_FILES: &elsa-ops-files-for-deploy |
+#        base-ops-files/base-ops-files/operations/add-persistent-isolation-segment-diego-cell.yml
+#        base-ops-files/base-ops-files/operations/windows2019-cell.yml
+#        base-ops-files/base-ops-files/operations/use-online-windows2019fs.yml
+#        base-ops-files/skip-cert-verify-on-windows-cell.yml
+#        base-ops-files/add-database-encryption-keys.yml
+#        base-ops-files/scale-up-cells.yml
+#        base-ops-files/scale-generic-worker-processes.yml
+#        base-ops-files/use-latest-capi.yml
+#        base-ops-files/use-s3-and-cdn-storage.yml
+#        base-ops-files/add-new-relic.yml
+#        base-ops-files/disable-skip-cert-verify.yml
+#        base-ops-files/disable-skip-cert-verify-iso-seg.yml
+#        base-ops-files/disable-uaa-get-requests.yml
+#        base-ops-files/seed-credhub-asg.yml
+#        base-ops-files/base-ops-files/operations/scale-database-cluster.yml
+#        base-ops-files/base-ops-files/operations/test/speed-up-dynamic-asgs.yml
+#        base-ops-files/seed-uaa-asg.yml
+#        telemetry.yml
+#        base-ops-files/base-ops-files/operations/experimental/use-mysql-version-8.0.yml
+#      VARS_FILES: |
+#        certs.yml
+#        s3-terraform-metadata.json
+#        extra-vars.yml
+#  - task: updated-integration-configs
+#    file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+#    input_mapping:
+#      bbl-state: elsa-bbl-state
+#      integration-configs: elsa-integration-configs
+#    params:
+#      CATS_INTEGRATION_CONFIG_FILE: "elsa/cats_integration_config.json"
+#      BBL_STATE_DIR: elsa
+#      SYSTEM_DOMAIN: *elsa-domain
+#    ensure:
+#      put: elsa-integration-configs
+#      params:
+#        repository: updated-integration-configs
+#        rebase: true
+#  - task: updated-baras-integration-configs
+#    file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      integration-configs: updated-integration-configs
+#    params:
+#      CATS_INTEGRATION_CONFIG_FILE: "elsa/baras_integration_config.json"
+#      BBL_STATE_DIR: elsa
+#      SYSTEM_DOMAIN: *elsa-domain
+#    ensure:
+#      put: elsa-integration-configs
+#      params:
+#        repository: updated-integration-configs
+#        rebase: true
+#  - task: enable-feature-flags
+#    file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
+#    input_mapping:
+#      bbl-state: elsa-bbl-state
+#    params:
+#      SYSTEM_DOMAIN: *elsa-domain
+#      BBL_STATE_DIR: elsa
+#      ENABLED_FEATURE_FLAGS: "diego_docker"
+#  - task: cleanup-acceptance-test-leftovers
+#    file: capi-ci/ci/acceptance-test-utils/cats_cleanup.yml
+#    params:
+#      CF_API_TARGET: &elsa-api-url https://api.elsa.capi.land
+#      BBL_STATE_DIR: elsa
+#  - in_parallel:
+#    - task: acceptance-tests
+#      file: cf-deployment-concourse-tasks/run-cats/task.yml
+#      input_mapping:
+#        integration-config: updated-integration-configs
+#      params:
+#        NODES: 6
+#        CONFIG_FILE_PATH: "elsa/cats_integration_config.json"
+#        CAPTURE_LOGS: true
+#    - task: capi-bara-tests
+#      file: capi-ci/ci/baras/run-baras.yml
+#      input_mapping:
+#        integration-config: updated-integration-configs
+#      params:
+#        NODES: 2
+#        FLAKE_ATTEMPTS: 2
+#        CONFIG_FILE_PATH: "elsa/baras_integration_config.json"
+#    - task: sync-integration-tests
+#      file: sync-integration-tests/concourse/task_with_credhub.yml
+#      input_mapping:
+#        environment: capi-ci-private
+#      params:
+#        BOSH_DEPLOYMENT_NAME: cf
+#        BOSH_API_INSTANCE: api/0
+#        CF_API_TARGET: *elsa-api-url
+#        CF_SKIP_SSL_VALIDATION: false
+#        CF_APPS_DOMAIN: *elsa-domain
+#        BBL_STATE_DIR: elsa
+#        USE_CREDHUB: true
+#        RUN_REVISIONS_TESTS: true
+#        FLAKE_ATTEMPTS: 2
+#  - task: extract-bbl-environment
+#    file: capi-ci/ci/bbl-tasks/extract_bbl_environment.yml
+#    params:
+#      ENV_NAME: elsa
+#  - task: run-blobstore-benchmarks
+#    file: capi-ci/ci/benchmarks/run-blobstore-benchmarks.yml
+#    params:
+#      BBL_STATE_DIR: elsa
+
+#- name: kiki-back-compat-migrations
+#  serial: true
+#  serial_groups: [kiki]
+#  plan:
+#  - in_parallel:
+#    - get: cloud_controller_ng
+#      passed: [create-capi-release]
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: cf-deployment
+#    - get: kiki-bbl-state
+#    - get: kiki-integration-configs
+#    - get: sync-integration-tests
+#    - get: capi-bara-tests
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: capi-release
+#      passed:
+#      - create-capi-release
+#      resource: capi-release-develop
+#    - get: capi-release-tarball
+#      passed:
+#      - create-capi-release
+#      trigger: true
+#    - get: cf-acceptance-tests
+#    - get: runtime-ci
+#  - task: kiki-stemcell-upload
+#    file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
+#    input_mapping:
+#      bbl-state: kiki-bbl-state
+#    params:
+#      BBL_STATE_DIR: "kiki"
+#  - task: upload-capi-release-tarball
+#    file: capi-ci/ci/bosh/upload-release.yml
+#    input_mapping:
+#      bbl-state: kiki-bbl-state
+#      release-tarball: capi-release-tarball
+#    params:
+#      BBL_STATE_DIR: "kiki"
+#  - task: delete-deployment
+#    file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+#    input_mapping:
+#      bbl-state: kiki-bbl-state
+#    params:
+#      BBL_STATE_DIR: kiki
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: &kiki-ops-files-to-collect |
+#        cf-deployment-operations/skip-cert-verify.yml
+#        cf-deployment-operations/scale-up-cells.yml
+#        cf-deployment-operations/scale-up-dopplers.yml
+#        cf-deployment-operations/performance/scale-generic-worker-processes.yml
+#        cf-deployment-operations/log-all-sequel-activity.yml
+#        cf-deployment-operations/temporary/disable-uaa-get-requests.yml
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: kiki
+#      SYSTEM_DOMAIN: *kiki-domain
+#      OPS_FILES: &kiki-ops-files-for-deploy |
+#        base-ops-files/operations/add-persistent-isolation-segment-diego-cell.yml
+#        skip-cert-verify.yml
+#        base-ops-files/operations/scale-to-one-az.yml
+#        base-ops-files/operations/test/scale-to-one-az-addon-parallel-cats.yml
+#        scale-up-cells.yml
+#        scale-up-dopplers.yml
+#        scale-generic-worker-processes.yml
+#        base-ops-files/operations/use-postgres.yml
+#        base-ops-files/operations/test/speed-up-dynamic-asgs.yml
+#        log-all-sequel-activity.yml
+#        disable-uaa-get-requests.yml
+#  - task: ensure-api-healthy
+#    file: runtime-ci/tasks/ensure-api-healthy/task.yml
+#    params:
+#      SYSTEM_DOMAIN: *kiki-domain
+#      CONFIG_FILE_PATH: kiki/cats_integration_config.json
+#      CATS_INTEGRATION_CONFIG_FILE: "kiki/cats_integration_config.json"
+#    input_mapping:
+#      cats-integration-config: kiki-integration-configs
+#      integration-configs: kiki-integration-configs
+#  - task: extract-bbl-environment
+#    file: capi-ci/ci/bbl-tasks/extract_bbl_environment.yml
+#    params:
+#      ENV_NAME: kiki
+#  - task: apply-cc-migrations
+#    file: capi-ci/ci/migrations/apply_latest_migrations.yml
+#    params:
+#      BBL_STATE_DIR: "kiki"
+#  - task: updated-integration-configs
+#    file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+#    input_mapping:
+#      bbl-state: kiki-bbl-state
+#      integration-configs: kiki-integration-configs
+#    params:
+#      BBL_STATE_DIR: "kiki"
+#      CATS_INTEGRATION_CONFIG_FILE: "kiki/cats_integration_config.json"
+#      SYSTEM_DOMAIN: *kiki-domain
+#    ensure:
+#      put: kiki-integration-configs
+#      params:
+#        repository: updated-integration-configs
+#        rebase: true
+#  - task: enable-feature-flags
+#    file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
+#    input_mapping:
+#      bbl-state: kiki-bbl-state
+#    params:
+#      BBL_STATE_DIR: "kiki"
+#      SYSTEM_DOMAIN: *kiki-domain
+#      ENABLED_FEATURE_FLAGS: "diego_docker"
+#  - in_parallel:
+#    - task: run-cats
+#      file: cf-deployment-concourse-tasks/run-cats/task.yml
+#      input_mapping:
+#        integration-config: updated-integration-configs
+#      params:
+#        NODES: 6
+#        CONFIG_FILE_PATH: "kiki/cats_integration_config.json"
+#        CAPTURE_LOGS: true
+#    - task: sync-integration-tests
+#      file: sync-integration-tests/concourse/task_with_credhub.yml
+#      input_mapping:
+#        environment: capi-ci-private
+#      params:
+#        BOSH_DEPLOYMENT_NAME: cf
+#        BOSH_API_INSTANCE: api/0
+#        CF_API_TARGET: https://api.kiki.capi.land
+#        CF_SKIP_SSL_VALIDATION: true
+#        CF_APPS_DOMAIN: *kiki-domain
+#        BBL_STATE_DIR: kiki
+#        USE_CREDHUB: true
+#        RUN_REVISIONS_TESTS: false
+
+#- name: ship-it
+#  serial_groups: [version]
+#  plan:
+#  - in_parallel:
+#    - get: cloud_controller_ng
+#      passed: [bump-ci-passed]
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: capi-release
+#      resource: capi-release-ci-passed
+#      passed: [bump-ci-passed]
+#    - get: capi-release-tarball
+#      passed: [bump-ci-passed]
+#    - get: next-version
+#      params: {bump: final}
+#  - put: next-version
+#    params: {file: next-version/version}
+#  - task: finalize-release
+#    file: capi-ci/ci/bosh/finalize-release.yml
+#    params:
+#      PRIVATE_YAML: ((capi_release_private_yaml))
+#  - put: capi-final-releases
+#    params:
+#      file: finalized-release-tarball/capi-*.tgz
+#  - put: capi-release
+#    resource: capi-release-main
+#    params:
+#      repository: finalized-release-git-repo/capi-release
+#      tag: next-version/version
+#  - put: next-version
+#    params:
+#      bump: minor
+#  - task: block
+#    config:
+#      platform: linux
+#      image_resource:
+#        type: docker-image
+#        source: {repository: ubuntu}
+#      run:
+#        path: echo
+#        args: ["Way to go, Zach!"]
+
+#- name: push-github-release
+#  serial_groups: [version]
+#  plan:
+#  - in_parallel:
+#    - get: capi-ci
+#    - get: capi-release
+#      resource: capi-release-main
+#      passed: [ship-it]
+#    - get: capi-final-releases
+#      passed: [ship-it]
+#      trigger: true
+#    - get: github-published-release
+#      params:
+#        globs: []
+#  - task: generate-github-release
+#    file: capi-ci/ci/git/generate_github_release.yml
+#  - put: github-release
+#    params:
+#      body: generated-release/body
+#      commitish: generated-release/commitish
+#      name: generated-release/name
+#      tag: generated-release/version
+#      globs:
+#      - generated-release/*.tgz
+
+#- name: rc-docs-v3
+#  serial: true
+#  plan:
+#  - in_parallel:
+#    - get: capi-ci
+#    - get: capi-release
+#      resource: capi-release-ci-passed
+#      trigger: true
+#      params:
+#        submodules:
+#        - src/cloud_controller_ng
+#  - task: push-rc-docs-v3
+#    file: capi-ci/ci/docs/push_rc_docs_v3.yml
+#    params:
+#      GITHUB_PUSH_KEY: ((private_key))
+#    on_failure:
+#      put: slack-alert
+#      params:
+#        text: '[rc-docs-v3] OH NO! Failed to update documentation https://capi.ci.cf-app.com/?groups=migrations-dependencies-docs'
+
+#- name: update-and-push-docs-v2
+#  serial: true
+#  plan:
+#  - in_parallel:
+#    - get: cf-deployment-release
+#      trigger: true
+#    - get: cf-deployment-main
+#    - get: capi-ci
+#    - get: api-docs
+#    - get: capi-release-main
+#      params:
+#        submodules:
+#        - src/cloud_controller_ng
+#  - task: update-docs-v2
+#    file: capi-ci/ci/docs/update_docs_v2.yml
+#    params: &docs-aws-account
+#      AWS_DEFAULT_REGION: us-east-1
+#      AWS_ACCESS_KEY_ID: ((cloudgate_docs_s3_access_key))
+#      AWS_SECRET_ACCESS_KEY: ((cloudgate_docs_s3_secret_key))
+#      AWS_ROLE_ARN: ((cloudgate_docs_s3_role_arn))
+#      CF_VERSIONS_FILE_PATH: api-docs/data/cf-deployment-api-versions.json
+#      GIT_COMMIT_USERNAME: "CAPI CI"
+#      GIT_COMMIT_EMAIL: "cf-capi-eng+ci@pivotal.io"
+#    input_mapping:
+#      capi-release: capi-release-main
+#      cf-deployment: cf-deployment-main
+#  - put: api-docs
+#    resource: api-docs
+#    params:
+#      repository: updated-api-docs/api-docs
+#      branch: main
+#      rebase: true
+
+#- name: bump-cc-v3-api
+#  serial: true
+#  plan:
+#  - in_parallel:
+#    # we are using version as an input to gate on ship-it using a cheap to get resource
+#    # it is not actually a necessary input for this job
+#    - get: next-version
+#      passed: [ship-it]
+#      trigger: true
+#    - get: cc-api-v3-version
+#  - put: cc-api-v3-version
+#    params:
+#      bump: minor
+
+#- name: bump-cc-v2-api
+#  serial: true
+#  plan:
+#  - in_parallel:
+#    # we are using version as an input to gate on ship-it using a cheap to get resource
+#    # it is not actually a necessary input for this job
+#    - get: next-version
+#      passed: [ship-it]
+#      trigger: true
+#    - get: cc-api-v2-version
+#  - put: cc-api-v2-version
+#    params:
+#      bump: minor
+
+#- name: update-api-info-v2-docs
+#  serial: true
+#  plan:
+#  - in_parallel:
+#    - get: capi-ci
+#    - get: cc-api-v2-version
+#      trigger: true
+#      passed: [bump-cc-v2-api]
+#    - get: cloud_controller_ng
+#  - task: update-api-info-v2-docs
+#    file: capi-ci/ci/docs/update_v2_docs_info_api_version.yml
+#  - put: cloud_controller_ng
+#    params:
+#      repository: cloud_controller_ng_bumped_docs/cloud_controller_ng
+#      rebase: true
+
+#- name: publish-docs-v3
+#  serial: true
+#  plan:
+#  - in_parallel:
+#    - get: capi-ci
+#    - get: capi-release
+#      resource: capi-release-main
+#      trigger: true
+#      passed: [ship-it]
+#      params:
+#        submodules:
+#        - src/cloud_controller_ng
+#  - task: push-docs-v3
+#    file: capi-ci/ci/docs/push_docs_v3.yml
+#    privileged: true
+#    params:
+#      GITHUB_PUSH_KEY: ((private_key))
+#    on_failure:
+#      put: slack-alert
+#      params:
+#        text: '[publish-docs-v3] OH NO! Failed to update documentation https://capi.ci.cf-app.com/?groups=migrations-dependencies-docs'
+
+#- name: rotate-certs-elsa
+#  serial: true
+#  serial_groups: [elsa]
+#  plan:
+#  - in_parallel:
+#    - get: elsa-bbl-state
+#    - get: capi-ci-private
+#    - get: capi-ci
+#    - get: cf-deployment-concourse-tasks
+#    - get: cf-deployment
+#    - get: thirtyfirstly
+#      trigger: true
+#  - task: disable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    params:
+#      ENVIRONMENT: elsa
+#      ON_OR_OFF: off
+#  - put: elsa-aws-storage-terraform
+#    params:
+#      env_name: elsa
+#      terraform_source: capi-ci/terraform/aws-s3-buckets/
+#      vars:
+#        aws_access_key: ((app_runtime_interfaces_elsa_access_key))
+#        aws_secret_key: ((app_runtime_interfaces_elsa_secret_access_key))
+#        cdn_key_pair_id: ((app_runtime_interfaces_elsa_cdn_key_pair_id))
+#        cdn_private_key: ((app_runtime_interfaces_elsa_cdn_private_key))
+#  - task: create-elsa-vars-files
+#    file: capi-ci/ci/bosh/create-elsa-vars-files.yml
+#    params:
+#      NEW_RELIC_LICENSE_KEY: ((new_relic_license_key))
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: *elsa-ops-files-to-collect
+#  - task: collect-private-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: collected-ops-files
+#      new-ops-files: capi-ci-private
+#    params:
+#      NEW_OPS_FILES: elsa/telemetry.yml
+#  - task: scale-down-deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private-with-extra
+#    params:
+#      BBL_STATE_DIR: "elsa"
+#      SYSTEM_DOMAIN: *elsa-domain
+#      OPS_FILES: |
+#        base-ops-files/base-ops-files/operations/add-persistent-isolation-segment-diego-cell.yml
+#        base-ops-files/base-ops-files/operations/windows2019-cell.yml
+#        base-ops-files/base-ops-files/operations/use-online-windows2019fs.yml
+#        base-ops-files/skip-cert-verify-on-windows-cell.yml
+#        base-ops-files/add-database-encryption-keys.yml
+#        base-ops-files/scale-up-cells.yml
+#        base-ops-files/scale-generic-worker-processes.yml
+#        base-ops-files/use-latest-capi.yml
+#        base-ops-files/use-s3-and-cdn-storage.yml
+#        base-ops-files/add-new-relic.yml
+#        base-ops-files/disable-skip-cert-verify.yml
+#        base-ops-files/disable-skip-cert-verify-iso-seg.yml
+#        base-ops-files/disable-uaa-get-requests.yml
+#        base-ops-files/seed-credhub-asg.yml
+#        base-ops-files/seed-uaa-asg.yml
+#        base-ops-files/base-ops-files/operations/experimental/use-mysql-version-8.0.yml
+#        telemetry.yml
+#      VARS_FILES: |
+#        certs.yml
+#        s3-terraform-metadata.json
+#        extra-vars.yml
+#  - task: delete-certs
+#    file: capi-ci/ci/bbl-tasks/delete-certs.yml
+#    params:
+#      ENVIRONMENT: elsa
+#  - put: capi-ci-private
+#    params:
+#      repository: updated-capi-ci-private
+#      rebase: true
+#  - task: update-bosh-elsa
+#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#      bbl-config: updated-capi-ci-private
+#    params: *update-bosh-elsa-params
+#    ensure:
+#      put: elsa-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#  - task: recreate-elsa-vars-files
+#    file: capi-ci/ci/bosh/create-elsa-vars-files.yml
+#    input_mapping:
+#      capi-ci-private: updated-bbl-state
+#    params:
+#      NEW_RELIC_LICENSE_KEY: ((new_relic_license_key))
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private-with-extra
+#    params:
+#      BBL_STATE_DIR: "elsa"
+#      SYSTEM_DOMAIN: *elsa-domain
+#      OPS_FILES: *elsa-ops-files-for-deploy
+#      VARS_FILES: |
+#        certs.yml
+#        s3-terraform-metadata.json
+#        extra-vars.yml
+#      BOSH_DEPLOY_ARGS: "--fix"
+#  - task: enable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    input_mapping:
+#      capi-ci-private: updated-bbl-state
+#    params:
+#      ENVIRONMENT: elsa
+#      ON_OR_OFF: on
+
+#- name: rotate-certs-mulan
+#  serial: true
+#  serial_groups: [mulan]
+#  plan:
+#  - in_parallel:
+#    - get: mulan-bbl-state
+#    - get: capi-ci-private
+#    - get: capi-ci
+#    - get: cf-deployment-concourse-tasks
+#    - get: cf-deployment
+#    - get: thirtyfirstly
+#      trigger: true
+#  - task: disable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    params:
+#      ENVIRONMENT: mulan
+#      ON_OR_OFF: off
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: *mulan-ops-to-collect
+#  - task: delete-certs
+#    file: capi-ci/ci/bbl-tasks/delete-certs.yml
+#    params:
+#      ENVIRONMENT: mulan
+#  - put: capi-ci-private
+#    params:
+#      repository: updated-capi-ci-private
+#      rebase: true
+#  - task: update-bosh-mulan
+#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#      bbl-config: updated-capi-ci-private
+#    params: *update-bosh-mulan-params
+#    ensure:
+#      put: mulan-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: mulan
+#      SYSTEM_DOMAIN: *mulan-domain
+#      OPS_FILES: *mulan-ops-files
+#      BOSH_DEPLOY_ARGS: "--recreate --fix"
+#  - task: enable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    input_mapping:
+#      capi-ci-private: updated-bbl-state
+#    params:
+#      ENVIRONMENT: mulan
+#      ON_OR_OFF: on
+#
+#- name: rotate-certs-kiki
+#  serial: true
+#  serial_groups: [kiki]
+#  plan:
+#  - in_parallel:
+#    - get: kiki-bbl-state
+#    - get: capi-ci-private
+#    - get: capi-ci
+#    - get: cf-deployment-concourse-tasks
+#    - get: cf-deployment
+#    - get: thirtyfirstly
+#      trigger: true
+#  - task: disable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    params:
+#      ENVIRONMENT: kiki
+#      ON_OR_OFF: off
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: *kiki-ops-files-to-collect
+#  - task: delete-certs
+#    file: capi-ci/ci/bbl-tasks/delete-certs.yml
+#    params:
+#      ENVIRONMENT: kiki
+#  - put: capi-ci-private
+#    params:
+#      repository: updated-capi-ci-private
+#      rebase: true
+#  - task: update-bosh-kiki
+#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#      bbl-config: updated-capi-ci-private
+#    params: *update-bosh-kiki-params
+#    ensure:
+#      put: kiki-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: kiki
+#      SYSTEM_DOMAIN: *kiki-domain
+#      OPS_FILES: *kiki-ops-files-for-deploy
+#      BOSH_DEPLOY_ARGS: "--recreate --fix"
+#  - task: enable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    input_mapping:
+#      capi-ci-private: updated-bbl-state
+#    params:
+#      ENVIRONMENT: kiki
+#      ON_OR_OFF: on
+#
+#- name: update-bosh-xena-mysql
+#  serial: true
+#  serial_groups: [xena-mysql]
+#  plan:
+#  - in_parallel:
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: xena-mysql-bbl-state
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: cf-deployment
+#    - get: nightly
+#      trigger: true
+#    - get: bosh-deployment
+#  - task: seed-capi-ci-private
+#    file: capi-ci/ci/setup-environment/seed.yml
+#    params:
+#      ENVIRONMENT: xena-mysql
+#      DOMAIN: &xena-mysql-domain "xena-mysql.capi.land"
+#  - put: capi-ci-private
+#    params:
+#      repository: updated-capi-ci-private
+#      rebase: true
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: bosh-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: bosh-director-operations/increase-persistent-disk.yml
+#  - task: update-bosh-xena-mysql
+#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#      bbl-config: updated-capi-ci-private
+#    params: &update-bosh-xena-mysql-params
+#      BBL_STATE_DIR: "xena-mysql"
+#      BBL_IAAS: "gcp"
+#      BBL_CONFIG_DIR: "xena-mysql/bosh-lite-plan-patch"
+#      BBL_ENV_NAME: "xena-mysql"
+#      BBL_GCP_SERVICE_ACCOUNT_KEY: ((xena_gcp_json_key))
+#      BBL_GCP_PROJECT_ID: ((xena_gcp_project_id))
+#      BBL_GCP_ZONE: ((xena_gcp_zone))
+#      BBL_GCP_REGION: ((xena_gcp_region))
+#      IS_BOSH_LITE: true
+#      SKIP_LB_CREATION: true
+#      OPS_FILES: |
+#        base-ops-files/bosh-lite.yml
+#        base-ops-files/bosh-lite-runc.yml
+#        increase-persistent-disk.yml
+#    ensure:
+#      put: xena-mysql-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#  - task: update-cloud-config
+#    file: capi-ci/ci/bosh/update_cloud_config.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#      cloud-config: cf-deployment
+#    params:
+#      BBL_STATE_DIR: "xena-mysql"
+#      CLOUD_CONFIG_PATH: iaas-support/bosh-lite/cloud-config.yml
+#  - task: create-dns-record
+#    attempts: 5
+#    file: capi-ci/ci/bbl-tasks/create-dns-record.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#    params:
+#      BBL_STATE_DIR: "xena-mysql"
+#      DNS_DOMAIN: *xena-mysql-domain
+#      GCP_DNS_SERVICE_ACCOUNT_KEY: ((dns_gcp_json_key))
+#      GCP_PROJECT_ID: ((dns_gcp_project_id))
+#      SHARED_DNS_ZONE_NAME: "capi-land"
+#      IS_BOSH_LITE: true
+#  - task: run-bosh-cleanup
+#    file: capi-ci/ci/bbl-tasks/run-bosh-cleanup.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#    params:
+#      BBL_STATE_DIR: "xena-mysql"
+#
+#- name: update-bosh-gabrielle-postgres
+#  serial: true
+#  serial_groups: [gabrielle-postgres]
+#  plan:
+#  - in_parallel:
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: gabrielle-postgres-bbl-state
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: cf-deployment
+#    - get: nightly
+#      trigger: true
+#    - get: bosh-deployment
+#  - task: seed-capi-ci-private
+#    file: capi-ci/ci/setup-environment/seed.yml
+#    params:
+#      ENVIRONMENT: gabrielle-postgres
+#      DOMAIN: &gabrielle-postgres-domain "gabrielle-postgres.capi.land"
+#  - put: capi-ci-private
+#    params:
+#      repository: updated-capi-ci-private
+#      rebase: true
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: bosh-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: bosh-director-operations/increase-persistent-disk.yml
+#  - task: update-bosh-gabrielle-postgres
+#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#      bbl-config: updated-capi-ci-private
+#    params: &update-bosh-gabrielle-params
+#      BBL_STATE_DIR: "gabrielle-postgres"
+#      BBL_IAAS: "gcp"
+#      BBL_CONFIG_DIR: "gabrielle-postgres/bosh-lite-plan-patch"
+#      BBL_ENV_NAME: "gabrielle-postgres"
+#      BBL_GCP_SERVICE_ACCOUNT_KEY: ((xena_gcp_json_key))
+#      BBL_GCP_PROJECT_ID: ((xena_gcp_project_id))
+#      BBL_GCP_ZONE: ((xena_gcp_zone))
+#      BBL_GCP_REGION: ((xena_gcp_region))
+#      IS_BOSH_LITE: true
+#      SKIP_LB_CREATION: true
+#      OPS_FILES: |
+#        base-ops-files/bosh-lite.yml
+#        increase-persistent-disk.yml
+#    ensure:
+#      put: gabrielle-postgres-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#  - task: update-cloud-config
+#    file: capi-ci/ci/bosh/update_cloud_config.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#      cloud-config: cf-deployment
+#    params:
+#      BBL_STATE_DIR: "gabrielle-postgres"
+#      CLOUD_CONFIG_PATH: iaas-support/bosh-lite/cloud-config.yml
+#  - task: create-dns-record
+#    attempts: 5
+#    file: capi-ci/ci/bbl-tasks/create-dns-record.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#    params:
+#      BBL_STATE_DIR: "gabrielle-postgres"
+#      DNS_DOMAIN: *gabrielle-postgres-domain
+#      GCP_DNS_SERVICE_ACCOUNT_KEY: ((dns_gcp_json_key))
+#      GCP_PROJECT_ID: ((dns_gcp_project_id))
+#      SHARED_DNS_ZONE_NAME: "capi-land"
+#      IS_BOSH_LITE: true
+#  - task: run-bosh-cleanup
+#    file: capi-ci/ci/bbl-tasks/run-bosh-cleanup.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#    params:
+#      BBL_STATE_DIR: "gabrielle-postgres"
+#
+#- name: update-bosh-leia-azure-storage
+#  serial: true
+#  serial_groups: [leia-azure-storage]
+#  plan:
+#  - in_parallel:
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: leia-azure-storage-bbl-state
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: cf-deployment
+#    - get: nightly
+#      trigger: true
+#    - get: bosh-deployment
+#  - task: seed-capi-ci-private
+#    file: capi-ci/ci/setup-environment/seed.yml
+#    params:
+#      ENVIRONMENT: leia-azure-storage
+#      DOMAIN: &leia-azure-storage-domain "leia-azure-storage.capi.land"
+#  - put: capi-ci-private
+#    params:
+#      repository: updated-capi-ci-private
+#      rebase: true
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: bosh-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: bosh-director-operations/increase-persistent-disk.yml
+#  - task: update-bosh-leia-azure-storage
+#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#      bbl-config: updated-capi-ci-private
+#    params: &update-bosh-leia-params
+#      BBL_STATE_DIR: "leia-azure-storage"
+#      BBL_LB_CERT: "certs/load-balancer/server.crt"
+#      BBL_LB_KEY: "certs/load-balancer/server.key"
+#      LB_DOMAIN: *leia-azure-storage-domain
+#      BBL_IAAS: "gcp"
+#      BBL_ENV_NAME: "leia-azure-storage"
+#      BBL_GCP_SERVICE_ACCOUNT_KEY: ((leia_gcp_json_key))
+#      BBL_GCP_PROJECT_ID: ((leia_gcp_project_id))
+#      BBL_GCP_ZONE: ((leia_gcp_zone))
+#      BBL_GCP_REGION: ((leia_gcp_region))
+#      OPS_FILES: |
+#        increase-persistent-disk.yml
+#    ensure:
+#      put: leia-azure-storage-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#  - task: create-dns-record
+#    attempts: 5
+#    file: capi-ci/ci/bbl-tasks/create-dns-record.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#    params:
+#      BBL_STATE_DIR: "leia-azure-storage"
+#      DNS_DOMAIN: *leia-azure-storage-domain
+#      GCP_DNS_SERVICE_ACCOUNT_KEY: ((dns_gcp_json_key))
+#      GCP_PROJECT_ID: ((dns_gcp_project_id))
+#      SHARED_DNS_ZONE_NAME: "capi-land"
+#  - task: run-bosh-cleanup
+#    file: capi-ci/ci/bbl-tasks/run-bosh-cleanup.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#    params:
+#      BBL_STATE_DIR: "leia-azure-storage"
+#
+#- name: leia-azure-storage
+#  serial: true
+#  serial_groups: [leia-azure-storage]
+#  plan:
+#  - in_parallel:
+#    - get: cloud_controller_ng
+#      passed: [create-capi-release]
+#    - get: cf-deployment
+#      resource: cf-deployment
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: capi-release
+#      resource: capi-release-develop
+#      passed: [create-capi-release]
+#    - get: capi-release-tarball
+#      passed: [create-capi-release]
+#    - get: leia-azure-storage-integration-configs
+#    - get: cf-acceptance-tests
+#    - get: nightly
+#      trigger: true
+#  - task: stemcell-upload
+#    file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: leia-azure-storage
+#  - task: extract-bbl-environment
+#    file: capi-ci/ci/bbl-tasks/extract_bbl_environment.yml
+#    params:
+#      ENV_NAME: leia-azure-storage
+#  - task: release-upload
+#    file: capi-ci/ci/bosh/upload-release.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      release-tarball: capi-release-tarball
+#    params:
+#      BBL_STATE_DIR: leia-azure-storage
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: &leia-azure-storage-ops-to-collect |
+#        cf-deployment-operations/skip-cert-verify.yml
+#        cf-deployment-operations/use-latest-capi.yml
+#        cf-deployment-operations/enable-pxc-binlogging.yml
+#        cf-deployment-operations/log-cache-reduce-memory.yml
+#        cf-deployment-operations/increase-route-registration-interval.yml
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: leia-azure-storage
+#      SYSTEM_DOMAIN: *leia-azure-storage-domain
+#      OPS_FILES: &leia-azure-storage-ops-files |
+#        base-ops-files/operations/use-compiled-releases.yml
+#        base-ops-files/operations/use-external-blobstore.yml
+#        base-ops-files/operations/use-azure-storage-blobstore.yml
+#        base-ops-files/operations/scale-to-one-az.yml
+#        base-ops-files/operations/test/scale-to-one-az-addon-parallel-cats.yml
+#        base-ops-files/operations/test/speed-up-dynamic-asgs.yml
+#        base-ops-files/operations/experimental/use-mysql-version-8.0.yml
+#        use-latest-capi.yml
+#        skip-cert-verify.yml
+#        enable-pxc-binlogging.yml
+#        log-cache-reduce-memory.yml
+#        increase-route-registration-interval.yml
+#      VARS_FILES: leia-azure-storage/azure-storage-vars.yml
+#  - task: updated-integration-configs
+#    file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      integration-configs: leia-azure-storage-integration-configs
+#    params:
+#      BBL_STATE_DIR: leia-azure-storage
+#      CATS_INTEGRATION_CONFIG_FILE: "leia-azure-storage/cats_integration_config.json"
+#      SYSTEM_DOMAIN: *leia-azure-storage-domain
+#    ensure:
+#      put: leia-azure-storage-integration-configs
+#      params:
+#        repository: updated-integration-configs
+#        rebase: true
+#  - task: cleanup-acceptance-test-leftovers
+#    file: capi-ci/ci/acceptance-test-utils/cats_cleanup.yml
+#    params:
+#      CF_API_TARGET: https://api.leia-azure-storage.capi.land
+#      BBL_STATE_DIR: leia-azure-storage
+#  - task: acceptance-tests
+#    file: cf-deployment-concourse-tasks/run-cats/task.yml
+#    input_mapping:
+#      integration-config: updated-integration-configs
+#    params:
+#      NODES: 4
+#      CONFIG_FILE_PATH: "leia-azure-storage/cats_integration_config.json"
+#      CAPTURE_LOGS: true
+#  - task: run-blobstore-benchmarks
+#    file: capi-ci/ci/benchmarks/run-blobstore-benchmarks.yml
+#    params:
+#      BBL_STATE_DIR: leia-azure-storage
+#
+#- name: rotate-certs-leia-azure-storage
+#  serial: true
+#  serial_groups: [leia-azure-storage]
+#  plan:
+#  - in_parallel:
+#    - get: leia-azure-storage-bbl-state
+#    - get: capi-ci-private
+#    - get: capi-ci
+#    - get: cf-deployment-concourse-tasks
+#    - get: cf-deployment
+#    - get: thirtyfirstly
+#      trigger: true
+#  - task: disable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    params:
+#      ENVIRONMENT: leia-azure-storage
+#      ON_OR_OFF: off
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: *leia-azure-storage-ops-to-collect
+#  - task: delete-certs
+#    file: capi-ci/ci/bbl-tasks/delete-certs.yml
+#    params:
+#      ENVIRONMENT: leia-azure-storage
+#  - put: capi-ci-private
+#    params:
+#      repository: updated-capi-ci-private
+#      rebase: true
+#  - task: update-bosh-leia-azure-storage
+#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#      bbl-config: updated-capi-ci-private
+#    params: *update-bosh-leia-params
+#    ensure:
+#      put: leia-azure-storage-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: leia-azure-storage
+#      SYSTEM_DOMAIN: *leia-azure-storage-domain
+#      OPS_FILES: *leia-azure-storage-ops-files
+#      VARS_FILES: leia-azure-storage/azure-storage-vars.yml
+#      BOSH_DEPLOY_ARGS: "--recreate --fix"
+#  - task: enable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    input_mapping:
+#      capi-ci-private: updated-bbl-state
+#    params:
+#      ENVIRONMENT: leia-azure-storage
+#      ON_OR_OFF: on
+#
+#- name: update-bosh-rey-gcs-storage
+#  serial: true
+#  serial_groups: [rey-gcs-storage]
+#  plan:
+#  - in_parallel:
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: rey-gcs-storage-bbl-state
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: cf-deployment
+#    - get: nightly
+#      trigger: true
+#    - get: bosh-deployment
+#  - task: seed-capi-ci-private
+#    file: capi-ci/ci/setup-environment/seed.yml
+#    params:
+#      ENVIRONMENT: rey-gcs-storage
+#      DOMAIN: &rey-gcs-storage-domain "rey-gcs-storage.capi.land"
+#  - put: capi-ci-private
+#    params:
+#      repository: updated-capi-ci-private
+#      rebase: true
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: bosh-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: bosh-director-operations/increase-persistent-disk.yml
+#  - task: update-bosh-rey-gcs-storage
+#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#      bbl-config: updated-capi-ci-private
+#    params: &update-bosh-rey-gcs-storage-params
+#      BBL_STATE_DIR: "rey-gcs-storage"
+#      BBL_LB_CERT: "certs/load-balancer/server.crt"
+#      BBL_LB_KEY: "certs/load-balancer/server.key"
+#      LB_DOMAIN: *rey-gcs-storage-domain
+#      BBL_IAAS: "gcp"
+#      BBL_ENV_NAME: "rey-gcs-storage"
+#      BBL_GCP_SERVICE_ACCOUNT_KEY: ((rey_gcp_json_key))
+#      BBL_GCP_PROJECT_ID: ((rey_gcp_project_id))
+#      BBL_GCP_ZONE: ((rey_gcp_zone))
+#      BBL_GCP_REGION: ((rey_gcp_region))
+#      OPS_FILES: |
+#        increase-persistent-disk.yml
+#    ensure:
+#      put: rey-gcs-storage-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#  - task: create-dns-record
+#    attempts: 5
+#    file: capi-ci/ci/bbl-tasks/create-dns-record.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#    params:
+#      BBL_STATE_DIR: "rey-gcs-storage"
+#      DNS_DOMAIN: *rey-gcs-storage-domain
+#      GCP_DNS_SERVICE_ACCOUNT_KEY: ((dns_gcp_json_key))
+#      GCP_PROJECT_ID: ((dns_gcp_project_id))
+#      SHARED_DNS_ZONE_NAME: "capi-land"
+#  - task: run-bosh-cleanup
+#    file: capi-ci/ci/bbl-tasks/run-bosh-cleanup.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#    params:
+#      BBL_STATE_DIR: "rey-gcs-storage"
+#
+#- name: rey-gcs-storage
+#  serial: true
+#  serial_groups: [rey-gcs-storage]
+#  plan:
+#  - in_parallel:
+#    - get: cloud_controller_ng
+#      passed: [create-capi-release]
+#    - get: cf-deployment
+#      resource: cf-deployment
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: capi-release
+#      resource: capi-release-develop
+#      passed: [create-capi-release]
+#    - get: capi-release-tarball
+#      passed: [create-capi-release]
+#    - get: rey-gcs-storage-integration-configs
+#    - get: cf-acceptance-tests
+#    - get: nightly
+#      trigger: true
+#  - task: extract-bbl-environment
+#    file: capi-ci/ci/bbl-tasks/extract_bbl_environment.yml
+#    params:
+#      ENV_NAME: rey-gcs-storage
+#  - task: release-upload
+#    file: capi-ci/ci/bosh/upload-release.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      release-tarball: capi-release-tarball
+#    params:
+#      BBL_STATE_DIR: rey-gcs-storage
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: &rey-gcs-storage-ops-to-collect |
+#        cf-deployment-operations/skip-cert-verify.yml
+#        cf-deployment-operations/use-latest-capi.yml
+#        cf-deployment-operations/log-cache-reduce-memory.yml
+#        cf-deployment-operations/increase-route-registration-interval.yml
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: rey-gcs-storage
+#      SYSTEM_DOMAIN: *rey-gcs-storage-domain
+#      OPS_FILES: &rey-gcs-storage-ops-files |
+#        base-ops-files/operations/use-compiled-releases.yml
+#        base-ops-files/operations/use-external-blobstore.yml
+#        base-ops-files/operations/use-gcs-blobstore-service-account.yml
+#        base-ops-files/operations/scale-to-one-az.yml
+#        base-ops-files/operations/test/scale-to-one-az-addon-parallel-cats.yml
+#        base-ops-files/operations/test/speed-up-dynamic-asgs.yml
+#        base-ops-files/operations/experimental/use-mysql-version-8.0.yml
+#        use-latest-capi.yml
+#        skip-cert-verify.yml
+#        log-cache-reduce-memory.yml
+#        increase-route-registration-interval.yml
+#      VARS_FILES: rey-gcs-storage/gcs-storage-vars.yml
+#  - task: updated-integration-configs
+#    file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      integration-configs: rey-gcs-storage-integration-configs
+#    params:
+#      BBL_STATE_DIR: rey-gcs-storage
+#      CATS_INTEGRATION_CONFIG_FILE: "rey-gcs-storage/cats_integration_config.json"
+#      SYSTEM_DOMAIN: *rey-gcs-storage-domain
+#    ensure:
+#      put: rey-gcs-storage-integration-configs
+#      params:
+#        repository: updated-integration-configs
+#        rebase: true
+#  - task: cleanup-acceptance-test-leftovers
+#    file: capi-ci/ci/acceptance-test-utils/cats_cleanup.yml
+#    params:
+#      CF_API_TARGET: https://api.rey-gcs-storage.capi.land
+#      BBL_STATE_DIR: rey-gcs-storage
+#  - task: acceptance-tests
+#    file: cf-deployment-concourse-tasks/run-cats/task.yml
+#    input_mapping:
+#      integration-config: updated-integration-configs
+#    params:
+#      NODES: 4
+#      CONFIG_FILE_PATH: "rey-gcs-storage/cats_integration_config.json"
+#      CAPTURE_LOGS: true
+#  - task: run-blobstore-benchmarks
+#    file: capi-ci/ci/benchmarks/run-blobstore-benchmarks.yml
+#    params:
+#      BBL_STATE_DIR: rey-gcs-storage
+#
+#- name: rotate-certs-rey-gcs-storage
+#  serial: true
+#  serial_groups: [rey-gcs-storage]
+#  plan:
+#  - in_parallel:
+#    - get: rey-gcs-storage-bbl-state
+#    - get: capi-ci-private
+#    - get: capi-ci
+#    - get: cf-deployment-concourse-tasks
+#    - get: cf-deployment
+#    - get: thirtyfirstly
+#      trigger: true
+#  - task: disable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    params:
+#      ENVIRONMENT: rey-gcs-storage
+#      ON_OR_OFF: off
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: *rey-gcs-storage-ops-to-collect
+#  - task: delete-certs
+#    file: capi-ci/ci/bbl-tasks/delete-certs.yml
+#    params:
+#      ENVIRONMENT: rey-gcs-storage
+#  - put: capi-ci-private
+#    params:
+#      repository: updated-capi-ci-private
+#      rebase: true
+#  - task: update-bosh-rey-gcs-storage
+#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#      bbl-config: updated-capi-ci-private
+#    params: *update-bosh-rey-gcs-storage-params
+#    ensure:
+#      put: rey-gcs-storage-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: rey-gcs-storage
+#      SYSTEM_DOMAIN: *rey-gcs-storage-domain
+#      OPS_FILES: *rey-gcs-storage-ops-files
+#      VARS_FILES: rey-gcs-storage/gcs-storage-vars.yml
+#      BOSH_DEPLOY_ARGS: "--recreate --fix"
+#  - task: enable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    input_mapping:
+#      capi-ci-private: updated-bbl-state
+#    params:
+#      ENVIRONMENT: rey-gcs-storage
+#      ON_OR_OFF: on
+#
+#- name: bbl-destroy-xena-mysql
+#  serial: true
+#  serial_groups: [xena-mysql]
+#  plan:
+#  - in_parallel:
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: rey-gcs-storage-bbl-state
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: cf-deployment
+#    - get: bosh-deployment
+#  - task: bbl-destroy-xena-mysql
+#    file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      bbl-config: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: "xena-mysql"
+#      BBL_GCP_SERVICE_ACCOUNT_KEY: ((xena_gcp_json_key))
+#    ensure:
+#      put: xena-mysql-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#
+#- name: bbl-destroy-rey-gcs-storage
+#  serial: true
+#  serial_groups: [rey-gcs-storage]
+#  plan:
+#  - in_parallel:
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: rey-gcs-storage-bbl-state
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: cf-deployment
+#    - get: bosh-deployment
+#  - task: bbl-destroy-rey-gcs-storage
+#    file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      bbl-config: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: "rey-gcs-storage"
+#      BBL_GCP_SERVICE_ACCOUNT_KEY: ((rey_gcp_json_key))
+#    ensure:
+#      put: rey-gcs-storage-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#
+#- name: bbl-destroy-gabrielle-postgres
+#  serial: true
+#  serial_groups: [gabrielle-postgres]
+#  plan:
+#  - in_parallel:
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: rey-gcs-storage-bbl-state
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: cf-deployment
+#    - get: bosh-deployment
+#  - task: bbl-destroy-gabrielle-postgres
+#    file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      bbl-config: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: "gabrielle-postgres"
+#      BBL_GCP_SERVICE_ACCOUNT_KEY: ((xena_gcp_json_key))
+#    ensure:
+#      put: gabrielle-postgres-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#
+#- name: bbl-destroy-leia-azure-storage
+#  serial: true
+#  serial_groups: [leia-azure-storage]
+#  plan:
+#  - in_parallel:
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: rey-gcs-storage-bbl-state
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: cf-deployment
+#    - get: bosh-deployment
+#  - task: bbl-destroy-leia-azure-storage
+#    file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      bbl-config: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: "leia-azure-storage"
+#      BBL_GCP_SERVICE_ACCOUNT_KEY: ((leia_gcp_json_key))
+#    ensure:
+#      put: leia-azure-storage-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#
+#- name: merge-capi-release-main
+#  serial: true
+#  plan:
+#  - in_parallel:
+#    - get: capi-ci
+#    - get: capi-release-main
+#      passed: [ship-it]
+#      trigger: true
+#    - get: capi-release
+#      resource: capi-release-develop
+#  - task: merge-main-into-develop
+#    file: capi-ci/ci/git/merge_main_into_develop.yml
+#  - put: capi-release-develop
+#    params:
+#      repository: merged/capi-release
+#
+#- name: bump-ci-passed
+#  serial: true
+#  plan:
+#  - in_parallel:
+#    - get: cloud_controller_ng
+#      passed:
+#      - elsa-HA
+#      - mulan-postgres
+#      - kiki-back-compat-migrations
+#      - xena-mysql-drats
+#      - gabrielle-postgres-drats
+#      - ripley-nfs
+#    - get: capi-release
+#      resource: capi-release-develop
+#      passed:
+#      - elsa-HA
+#      - mulan-postgres
+#      - kiki-back-compat-migrations
+#      - xena-mysql-drats
+#      - gabrielle-postgres-drats
+#      - ripley-nfs
+#      trigger: true
+#    - get: capi-release-tarball
+#      passed:
+#      - elsa-HA
+#      - mulan-postgres
+#      - kiki-back-compat-migrations
+#      - xena-mysql-drats
+#      - gabrielle-postgres-drats
+#      - ripley-nfs
+#  - put: capi-release-ci-passed
+#    params:
+#      repository: capi-release
+
+#- name: xena-mysql-drats
+#  serial: true
+#  serial_groups: [xena-mysql]
+#  plan:
+#  - in_parallel:
+#    - get: cloud_controller_ng
+#      passed: [create-capi-release]
+#    - get: cf-deployment
+#      resource: cf-deployment
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: xena-mysql-bbl-state
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: capi-release
+#      resource: capi-release-develop
+#      passed: [create-capi-release]
+#    - get: capi-release-tarball
+#      passed: [create-capi-release]
+#      trigger: true
+#    - get: drats
+#    - get: bbr-github-release
+#    - get: staticfile-app
+#  - task: stemcell-upload
+#    file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: xena-mysql
+#      INFRASTRUCTURE: bosh-lite
+#  - task: upload-capi-release-tarball
+#    file: capi-ci/ci/bosh/upload-release.yml
+#    input_mapping:
+#      bbl-state: xena-mysql-bbl-state
+#      release-tarball: capi-release-tarball
+#    params:
+#      BBL_STATE_DIR: "xena-mysql"
+#  - task: delete-deployment
+#    file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+#    input_mapping:
+#      bbl-state: xena-mysql-bbl-state
+#    params:
+#      BBL_STATE_DIR: xena-mysql
+#      IGNORE_ERRORS: true
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: |
+#        cf-deployment-operations/skip-cert-verify.yml
+#        cf-deployment-operations/temporary/capi-bbr-enable-bpm.yml
+#        cf-deployment-operations/use-latest-capi.yml
+#        cf-deployment-operations/scale-up-cloud-controller.yml
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: xena-mysql
+#      SYSTEM_DOMAIN: *xena-mysql-domain
+#      OPS_FILES: |
+#        skip-cert-verify.yml
+#        base-ops-files/operations/bosh-lite.yml
+#        base-ops-files/operations/backup-and-restore/enable-backup-restore.yml
+#        capi-bbr-enable-bpm.yml
+#        base-ops-files/operations/use-compiled-releases.yml
+#        use-latest-capi.yml
+#        scale-up-cloud-controller.yml
+#  - task: extract-bbl-environment
+#    file: capi-ci/ci/bbl-tasks/extract_bbl_environment.yml
+#    params:
+#      ENV_NAME: xena-mysql
+#  - task: run-drats
+#    file: capi-ci/ci/drats/run-drats.yml
+#    privileged: true # necessary for sshuttle util
+#    input_mapping:
+#      bbr-binary-release: bbr-github-release
+#    params:
+#      CF_API_URL: https://api.xena-mysql.capi.land
+#      SKIP_SUITE_NAME: "cf-nfsbroker|cf-credhub|cf-smbbroker"
+#      BBL_STATE_DIR: "xena-mysql"
+#  - task: seed-app-data # encrypt app env vars with initial database_encryption key/current_key_label
+#    file: capi-ci/ci/cf/push-app.yml
+#    params:
+#      CF_API_URL: https://api.xena-mysql.capi.land
+#      APP_NAME: teenager
+#      APP_ENV_VAR_NAME: pupa
+#      APP_ENV_VAR_VALUE: chrysalis
+#      BBL_STATE_DIR: xena-mysql
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: &xena-mysql-ops-to-collect |
+#        cf-deployment-operations/skip-cert-verify.yml
+#        cf-deployment-operations/temporary/capi-bbr-enable-bpm.yml
+#        cf-deployment-operations/use-latest-capi.yml
+#        cf-deployment-operations/scale-up-cloud-controller.yml
+#        cf-deployment-operations/rotate-cc-database-key/add-database-encryption-keys.yml
+#        cf-deployment-operations/rotate-cc-database-key/change-current-database-encryption-key.yml
+#        cf-deployment-operations/rotate-cc-database-key/remove-old-key.yml
+#        cf-deployment-operations/rotate-cc-database-key/add-database-encryption-keys-new-format.yml
+#        cf-deployment-operations/rotate-cc-database-key/change-current-database-encryption-key-new-format.yml
+#        cf-deployment-operations/rotate-cc-database-key/remove-old-key-new-format.yml
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: xena-mysql
+#      SYSTEM_DOMAIN: *xena-mysql-domain
+#      OPS_FILES: |
+#        skip-cert-verify.yml
+#        base-ops-files/operations/bosh-lite.yml
+#        base-ops-files/operations/backup-and-restore/enable-backup-restore.yml
+#        capi-bbr-enable-bpm.yml
+#        base-ops-files/operations/use-compiled-releases.yml
+#        use-latest-capi.yml
+#        scale-up-cloud-controller.yml
+#        add-database-encryption-keys.yml
+#        change-current-database-encryption-key.yml
+#  - task: seed-app-data # encrypt app env vars with changed database_encryption key/current_key_label
+#    file: capi-ci/ci/cf/push-app.yml
+#    params:
+#      CF_API_URL: https://api.xena-mysql.capi.land
+#      APP_NAME: mature
+#      APP_ENV_VAR_NAME: transcendant
+#      APP_ENV_VAR_VALUE: butterfly
+#      BBL_STATE_DIR: xena-mysql
+#  - task: rotate-db-encryption-key
+#    file: cf-deployment-concourse-tasks/run-errand/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#    params:
+#      ERRAND_NAME: "rotate-cc-database-key"
+#      BBL_STATE_DIR: xena-mysql
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: xena-mysql
+#      SYSTEM_DOMAIN: *xena-mysql-domain
+#      OPS_FILES: &xena-mysql-ops-files |
+#        skip-cert-verify.yml
+#        base-ops-files/operations/bosh-lite.yml
+#        base-ops-files/operations/backup-and-restore/enable-backup-restore.yml
+#        base-ops-files/operations/use-compiled-releases.yml
+#        use-latest-capi.yml
+#        scale-up-cloud-controller.yml
+#        add-database-encryption-keys.yml
+#        change-current-database-encryption-key.yml
+#        remove-old-key.yml
+#  - in_parallel:
+#    - task: verify-env-vars
+#      file: capi-ci/ci/cf/verify-env-vars.yml
+#      params:
+#        CF_API_URL: https://api.xena-mysql.capi.land
+#        APP_NAME: teenager
+#        APP_ENV_VAR_NAME: pupa
+#        APP_ENV_VAR_VALUE: chrysalis
+#        BBL_STATE_DIR: xena-mysql
+#    - task: verify-env-vars
+#      file: capi-ci/ci/cf/verify-env-vars.yml
+#      params:
+#        CF_API_URL: https://api.xena-mysql.capi.land
+#        APP_NAME: mature
+#        APP_ENV_VAR_NAME: transcendant
+#        APP_ENV_VAR_VALUE: butterfly
+#        BBL_STATE_DIR: xena-mysql
+#  ## END OF OLD KEY FORMAT TESTS
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: xena-mysql
+#      SYSTEM_DOMAIN: *xena-mysql-domain
+#      OPS_FILES: |
+#        skip-cert-verify.yml
+#        base-ops-files/operations/bosh-lite.yml
+#        base-ops-files/operations/backup-and-restore/enable-backup-restore.yml
+#        capi-bbr-enable-bpm.yml
+#        base-ops-files/operations/use-compiled-releases.yml
+#        use-latest-capi.yml
+#        scale-up-cloud-controller.yml
+#        add-database-encryption-keys-new-format.yml
+#        change-current-database-encryption-key-new-format.yml
+#  - task: seed-app-data # encrypt app env vars with changed database_encryption key/current_key_label
+#    file: capi-ci/ci/cf/push-app.yml
+#    params:
+#      CF_API_URL: https://api.xena-mysql.capi.land
+#      APP_NAME: mature-new
+#      APP_ENV_VAR_NAME: transcendant
+#      APP_ENV_VAR_VALUE: butterfly
+#      BBL_STATE_DIR: xena-mysql
+#  - task: rotate-db-encryption-key
+#    file: cf-deployment-concourse-tasks/run-errand/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#    params:
+#      ERRAND_NAME: "rotate-cc-database-key"
+#      BBL_STATE_DIR: xena-mysql
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: xena-mysql
+#      SYSTEM_DOMAIN: *xena-mysql-domain
+#      OPS_FILES: &xena-mysql-ops-files |
+#        skip-cert-verify.yml
+#        base-ops-files/operations/bosh-lite.yml
+#        base-ops-files/operations/backup-and-restore/enable-backup-restore.yml
+#        base-ops-files/operations/use-compiled-releases.yml
+#        use-latest-capi.yml
+#        scale-up-cloud-controller.yml
+#        add-database-encryption-keys-new-format.yml
+#        change-current-database-encryption-key-new-format.yml
+#        remove-old-key-new-format.yml
+#  - in_parallel:
+#    - task: verify-env-vars
+#      file: capi-ci/ci/cf/verify-env-vars.yml
+#      params:
+#        CF_API_URL: https://api.xena-mysql.capi.land
+#        APP_NAME: teenager
+#        APP_ENV_VAR_NAME: pupa
+#        APP_ENV_VAR_VALUE: chrysalis
+#        BBL_STATE_DIR: xena-mysql
+#    - task: verify-env-vars
+#      file: capi-ci/ci/cf/verify-env-vars.yml
+#      params:
+#        CF_API_URL: https://api.xena-mysql.capi.land
+#        APP_NAME: mature-new
+#        APP_ENV_VAR_NAME: transcendant
+#        APP_ENV_VAR_VALUE: butterfly
+#        BBL_STATE_DIR: xena-mysql
+#
+#- name: rotate-certs-xena
+#  serial: true
+#  serial_groups: [xena-mysql]
+#  plan:
+#  - in_parallel:
+#    - get: xena-mysql-bbl-state
+#    - get: capi-ci-private
+#    - get: capi-ci
+#    - get: cf-deployment-concourse-tasks
+#    - get: cf-deployment
+#    - get: thirtyfirstly
+#      trigger: true
+#  - task: disable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    params:
+#      ENVIRONMENT: xena-mysql
+#      ON_OR_OFF: off
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: *xena-mysql-ops-to-collect
+#  - task: delete-certs
+#    file: capi-ci/ci/bbl-tasks/delete-certs.yml
+#    params:
+#      ENVIRONMENT: xena-mysql
+#  - put: capi-ci-private
+#    params:
+#      repository: updated-capi-ci-private
+#      rebase: true
+#  - task: update-bosh-xena-mysql
+#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#      bbl-config: updated-capi-ci-private
+#    params: *update-bosh-xena-mysql-params
+#    ensure:
+#      put: xena-mysql-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: xena-mysql
+#      SYSTEM_DOMAIN: *xena-mysql-domain
+#      OPS_FILES: *xena-mysql-ops-files
+#      BOSH_LITE: true
+#      BOSH_DEPLOY_ARGS: "--recreate --fix"
+#  - task: enable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    input_mapping:
+#      capi-ci-private: updated-bbl-state
+#    params:
+#      ENVIRONMENT: xena-mysql
+#      ON_OR_OFF: on
+#
+#- name: gabrielle-postgres-drats
+#  serial: true
+#  serial_groups: [gabrielle-postgres]
+#  plan:
+#  - in_parallel:
+#    - get: cloud_controller_ng
+#      passed: [create-capi-release]
+#    - get: cf-deployment
+#      resource: cf-deployment
+#    - get: capi-ci
+#    - get: capi-ci-private
+#    - get: gabrielle-postgres-bbl-state
+#    - get: cf-deployment-concourse-tasks
+#      resource: cf-deployment-concourse-tasks
+#    - get: capi-release
+#      resource: capi-release-develop
+#      passed: [create-capi-release]
+#    - get: capi-release-tarball
+#      passed: [create-capi-release]
+#      trigger: true
+#    - get: drats
+#    - get: bbr-github-release
+#  - task: stemcell-upload
+#    file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: gabrielle-postgres
+#      INFRASTRUCTURE: bosh-lite
+#  - task: upload-capi-release-tarball
+#    file: capi-ci/ci/bosh/upload-release.yml
+#    input_mapping:
+#      bbl-state: gabrielle-postgres-bbl-state
+#      release-tarball: capi-release-tarball
+#    params:
+#      BBL_STATE_DIR: "gabrielle-postgres"
+#  - task: delete-deployment
+#    file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+#    input_mapping:
+#      bbl-state: gabrielle-postgres-bbl-state
+#    params:
+#      BBL_STATE_DIR: gabrielle-postgres
+#      IGNORE_ERRORS: true
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: &gabrielle-postgres-ops-to-collect |
+#        cf-deployment-operations/skip-cert-verify.yml
+#        cf-deployment-operations/use-latest-capi.yml
+#        cf-deployment-operations/scale-up-cloud-controller.yml
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: capi-ci-private
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: gabrielle-postgres
+#      SYSTEM_DOMAIN: *gabrielle-postgres-domain
+#      OPS_FILES: &gabrielle-postgres-ops-files |
+#        skip-cert-verify.yml
+#        base-ops-files/operations/bosh-lite.yml
+#        base-ops-files/operations/backup-and-restore/enable-backup-restore.yml
+#        base-ops-files/operations/use-compiled-releases.yml
+#        use-latest-capi.yml
+#        base-ops-files/operations/use-postgres.yml
+#        base-ops-files/operations/experimental/enable-tls-cloud-controller-postgres.yml
+#        scale-up-cloud-controller.yml
+#  - task: extract-bbl-environment
+#    file: capi-ci/ci/bbl-tasks/extract_bbl_environment.yml
+#    params:
+#      ENV_NAME: gabrielle-postgres
+#  - task: run-drats
+#    file: capi-ci/ci/drats/run-drats.yml
+#    privileged: true # necessary for sshuttle util
+#    input_mapping:
+#      bbr-binary-release: bbr-github-release
+#    params:
+#      CF_API_URL: https://api.gabrielle-postgres.capi.land
+#      SKIP_SUITE_NAME: "cf-nfsbroker|cf-credhub|cf-smbbroker"
+#      BBL_STATE_DIR: "gabrielle-postgres"
+#
+#- name: rotate-certs-gabrielle
+#  serial: true
+#  serial_groups: [gabrielle-postgres]
+#  plan:
+#  - in_parallel:
+#    - get: gabrielle-postgres-bbl-state
+#    - get: capi-ci-private
+#    - get: capi-ci
+#    - get: cf-deployment-concourse-tasks
+#    - get: cf-deployment
+#    - get: thirtyfirstly
+#      trigger: true
+#  - task: disable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    params:
+#      ENVIRONMENT: gabrielle-postgres
+#      ON_OR_OFF: off
+#  - task: collect-ops-files
+#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+#    input_mapping:
+#      base-ops-files: cf-deployment
+#      new-ops-files: capi-ci
+#    params:
+#      NEW_OPS_FILES: *gabrielle-postgres-ops-to-collect
+#  - task: delete-certs
+#    file: capi-ci/ci/bbl-tasks/delete-certs.yml
+#    params:
+#      ENVIRONMENT: gabrielle-postgres
+#  - put: capi-ci-private
+#    params:
+#      repository: updated-capi-ci-private
+#      rebase: true
+#  - task: update-bosh-gabrielle-postgres
+#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+#    input_mapping:
+#      bbl-state: updated-capi-ci-private
+#      bbl-config: updated-capi-ci-private
+#    params: *update-bosh-gabrielle-params
+#    ensure:
+#      put: gabrielle-postgres-bbl-state
+#      params:
+#        repository: updated-bbl-state
+#        rebase: true
+#  - task: deploy
+#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+#    input_mapping:
+#      bbl-state: updated-bbl-state
+#      ops-files: collected-ops-files
+#      vars-files: capi-ci-private
+#    params:
+#      BBL_STATE_DIR: gabrielle-postgres
+#      SYSTEM_DOMAIN: *gabrielle-postgres-domain
+#      OPS_FILES: *gabrielle-postgres-ops-files
+#      BOSH_LITE: true
+#      BOSH_DEPLOY_ARGS: "--recreate --fix"
+#  - task: enable-resurrection
+#    file: capi-ci/ci/bbl-tasks/update-resurrection.yml
+#    input_mapping:
+#      capi-ci-private: updated-bbl-state
+#    params:
+#      ENVIRONMENT: gabrielle-postgres
+#      ON_OR_OFF: on
+#
+#- name: thirtyfirstly-warning
+#  plan:
+#  - get: thirtiethly
+#    trigger: true
+#  - put: slack-rotation-alert
+#    params:
+#      silent: true
+#      username: "cert rotator"
+#      text: |-
+#        If there's another day in this month,
+#        all the certs are going to rotate TONIGHT at 7pm PST
+#        unless you pause the "thirtyfirstly" resource in concourse.
+#        January, March, May, July, August, October, and December all have 31 days.
