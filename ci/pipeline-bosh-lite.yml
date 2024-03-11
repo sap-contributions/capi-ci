@@ -1,19 +1,19 @@
 resource_types:
 - name: terraform
-  type: docker-image
+  type: registry-image
   source:
     repository: ljfranklin/terraform-resource
 - name: bosh-deployment
-  type: docker-image
+  type: registry-image
   source:
     repository: cloudfoundry/bosh-deployment-resource
 - name: slack-notification
-  type: docker-image
+  type: registry-image
   source:
     repository: cfcommunity/slack-notification-resource
     tag: latest
 - name: cron-resource
-  type: docker-image
+  type: registry-image
   source:
     repository: cftoolsmiths/cron-test
 

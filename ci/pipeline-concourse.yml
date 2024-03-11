@@ -6,11 +6,11 @@ groups:
 
 resource_types:
 - name: bosh2-deployment
-  type: docker-image
+  type: registry-image
   source:
     repository: cloudfoundry/bosh-deployment-resource
 - name: bbl-state-resource
-  type: docker-image
+  type: registry-image
   source:
     repository: cfinfrastructure/bbl-state-resource
 

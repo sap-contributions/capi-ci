@@ -30,24 +30,24 @@ groups:
 
 resource_types:
 - name: slack-notification
-  type: docker-image
+  type: registry-image
   source:
     repository: cfcommunity/slack-notification-resource
 - name: terraform
-  type: docker-image
+  type: registry-image
   source:
     repository: ljfranklin/terraform-resource
 - name: gcs
-  type: docker-image
+  type: registry-image
   source:
     repository: frodenas/gcs-resource
 - name: file-url
-  type: docker-image
+  type: registry-image
   source:
     repository: pivotalservices/concourse-curl-resource
     tag: latest
 - name: cron-resource
-  type: docker-image
+  type: registry-image
   source:
     repository: cftoolsmiths/cron-resource
 
@@ -1673,7 +1673,7 @@ jobs:
 #    config:
 #      platform: linux
 #      image_resource:
-#        type: docker-image
+#        type: registry-image
 #        source: {repository: ubuntu}
 #      run:
 #        path: echo

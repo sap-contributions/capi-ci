@@ -10,7 +10,7 @@ outputs:
   - name: updated-capi-release
 
 image_resource:
-  type: docker-image
+  type: registry-image
   source:
     repository: cloudfoundry/capi
     tag: runtime-ci
