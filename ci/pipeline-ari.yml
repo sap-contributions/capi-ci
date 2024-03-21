@@ -17,8 +17,11 @@ groups:
   - bridge-unit-tests
   - verify-capi-release-commits
   - capi-release-template-tests
-#  - create-capi-release
-#  - bump-capi-release
+  - create-capi-release
+  - bump-capi-release
+  - asha-mysql-deploy-cf
+  - asha-mysql-tests
+  - asha-mysql-destroy
 #  - mulan-postgres
 #  - elsa-HA
 #  - kiki-back-compat-migrations
@@ -27,6 +30,15 @@ groups:
 #  - ripley-nfs
 #  - bump-ci-passed
 #  - bump-bbs-protos
+
+- name: bbl-up
+  jobs:
+    - bbl-up-asha-mysql
+
+- name: bbl-destroy
+  jobs:
+    - bbl-destroy-asha-mysql
+
 
 resource_types:
 - name: slack-notification
@@ -50,16 +62,20 @@ resource_types:
   type: registry-image
   source:
     repository: cftoolsmiths/cron-resource
+- name: gcs-resource
+  type: registry-image
+  source:
+    repository: frodenas/gcs-resource
 
 resources:
-# schedules
-#- name: weekly-sunday
-#  type: time
-#  source:
-#    location: America/Los_Angeles
-#    start: 23:00
-#    stop: 23:30
-#    days: [Sunday]
+#   schedules
+- name: weekly-sunday
+  type: time
+  source:
+    location: America/Los_Angeles
+    start: 23:00
+    stop: 23:30
+    days: [Sunday]
 
 #- name: capi-final-releases
 #  type: s3
@@ -78,13 +94,13 @@ resources:
     username: ((ari-wg-gitbot-username))
     password: ((ari-wg-gitbot-token))
 
-#- name: capi-ci-private
-#  type: git
-#  source:
-#    branch: main
-#    uri: https://github.com/cloudfoundry/capi-ci-private.git
-#    username: ((ari-wg-gitbot-username))
-#    password: ((ari-wg-gitbot-token))
+- name: capi-ci-private
+  type: git
+  source:
+    branch: main
+    uri: https://github.com/cloudfoundry/capi-ci-private.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
 
 - name: capi-release-main
   type: git
@@ -106,7 +122,7 @@ resources:
 - name: capi-release-develop
   type: git
   source:
-    branch: develop
+    branch: ari-concourse-develop
     uri: https://github.com/cloudfoundry/capi-release.git
     username: ((ari-wg-gitbot-username))
     password: ((ari-wg-gitbot-token))
@@ -121,24 +137,21 @@ resources:
 #    password: ((ari-wg-gitbot-token))
 
 
-#- name: capi-release-tarball
-#  type: s3
-#  source:
-#    bucket: capi-releases-app-runtime-interfaces
-#    regexp: capi-(.*)-.*-.*.tgz
-#    access_key_id: ((app_runtime_interfaces_capi_ci_access_key))
-#    secret_access_key: ((app_runtime_interfaces_capi_ci_secret_access_key))
-#    region_name: us-east-2
+- name: capi-release-tarball
+  type: gcs-resource
+  source:
+    bucket: capi-releases-app-runtime-interfaces
+    regexp: capi-(.*)-.*-.*.tgz
+    json_key: ((capi-release-blobs-uploader_key))
 
-#- name: next-version
-#  type: semver
-#  source:
-#    access_key_id: ((app_runtime_interfaces_capi_ci_access_key))
-#    secret_access_key: ((app_runtime_interfaces_capi_ci_secret_access_key))
-#    initial_version: 0.0.0
-#    bucket: capi-release-versions-app-runtime-interfaces
-#    key: current-capi-release-version
-#    region_name: us-east-2
+- name: next-version
+  type: semver
+  source:
+    driver: gcs
+    json_key: ((capi-release-blobs-uploader_key))
+    initial_version: 1.175.0
+    bucket: capi-release-versions-app-runtime-interfaces
+    key: current-capi-release-version
 
 #- name: cc-api-v3-version
 #  type: semver
@@ -239,13 +252,13 @@ resources:
 #  source:
 #    url: ((slack_channel_webhook_for_cert_rotations))
 
-#- name: sync-integration-tests
-#  type: git
-#  source:
-#    branch: master
-#    uri: https://github.com/cloudfoundry/sync-integration-tests.git
-#    username: ((ari-wg-gitbot-username))
-#    password: ((ari-wg-gitbot-token))
+- name: sync-integration-tests
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/cloudfoundry/sync-integration-tests.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
 
 - name: tps
   type: git
@@ -255,12 +268,12 @@ resources:
     username: ((ari-wg-gitbot-username))
     password: ((ari-wg-gitbot-token))
 
-#- name: cf-deployment
-#  type: git
-#  source:
-#    uri: https://github.com/cloudfoundry/cf-deployment.git
-#    username: ((ari-wg-gitbot-username))
-#    password: ((ari-wg-gitbot-token))
+- name: cf-deployment
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry/cf-deployment.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
 #
 #- name: cf-deployment-main
 #  type: git
@@ -277,40 +290,38 @@ resources:
 #    repository: cf-deployment
 #    access_token: ((ari-wg-gitbot-token))
 
-#- name: cf-deployment-concourse-tasks
-#  type: git
-#  source:
-#    branch: main
-#    tag_filter: v15.0.0
-#    private_key: ((private_key))
-#    uri: https://github.com/cloudfoundry/cf-deployment-concourse-tasks.git
-#    username: ((ari-wg-gitbot-username))
-#    password: ((ari-wg-gitbot-token))
+- name: cf-deployment-concourse-tasks
+  type: git
+  source:
+    branch: main
+    uri: https://github.com/cloudfoundry/cf-deployment-concourse-tasks.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
 
-#- name: cf-acceptance-tests
-#  type: git
-#  source:
-#    branch: release-candidate
-#    uri: https://github.com/cloudfoundry/cf-acceptance-tests.git
-#    username: ((ari-wg-gitbot-username))
-#    password: ((ari-wg-gitbot-token))
+- name: cf-acceptance-tests
+  type: git
+  source:
+    branch: release-candidate
+    uri: https://github.com/cloudfoundry/cf-acceptance-tests.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
 
-#- name: cf-cli
-#  type: github-release
-#  source:
-#    owner: cloudfoundry
-#    repository: cli
-#    tag_filter: "v7.*"
-#    pre_release: true
-#    access_token: ((ari-wg-gitbot-token))
+- name: cf-cli
+  type: github-release
+  source:
+    owner: cloudfoundry
+    repository: cli
+    tag_filter: "v8.*"
+    pre_release: true
+    access_token: ((ari-wg-gitbot-token))
 
-#- name: capi-bara-tests
-#  type: git
-#  source:
-#    branch: main
-#    uri: https://github.com/cloudfoundry/capi-bara-tests.git
-#    username: ((ari-wg-gitbot-username))
-#    password: ((ari-wg-gitbot-token))
+- name: capi-bara-tests
+  type: git
+  source:
+    branch: main
+    uri: https://github.com/cloudfoundry/capi-bara-tests.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
 #
 #- name: bbr-github-release
 #  type: github-release
@@ -418,15 +429,23 @@ resources:
 #    username: ((ari-wg-gitbot-username))
 #    password: ((ari-wg-gitbot-token))
 #
-## Xena resources
-#- name: xena-mysql-bbl-state
-#  type: git
-#  source:
-#    branch: main
-#    uri: https://github.com/cloudfoundry/capi-ci-private.git
-#    username: ((ari-wg-gitbot-username))
-#    password: ((ari-wg-gitbot-token))
-#
+# Asha resources
+- name: asha-mysql-bbl-state
+  type: git
+  source:
+    branch: main
+    uri: https://github.com/cloudfoundry/capi-ci-private.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
+- name: asha-mysql-integration-configs
+  type: git
+  source:
+    branch: main
+    uri: https://github.com/cloudfoundry/capi-ci-private.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
 #- name: gabrielle-postgres-bbl-state
 #  type: git
 #  source:
@@ -573,36 +592,36 @@ jobs:
     - task: run-config-template-tests
       file: capi-ci/ci/test-unit/run_capi_release_config_template_tests.yml
 
-#- name: bump-capi-release
-#  plan:
-#  - in_parallel:
-#    - get: capi-ci
-#    - get: capi-release
-#      resource: capi-release-develop
-#      passed: [verify-capi-release-commits]
-#      trigger: true
-#    - get: cloud_controller_ng
-#      passed: [cc-unit-tests]
-#      trigger: true
-#    - get: diego-release
-#      passed: [bridge-unit-tests]
-#      params:
-#        submodules:
-#        - src/code.cloudfoundry.org/bbs
-#        - src/code.cloudfoundry.org/lager
-#        - src/code.cloudfoundry.org/locket
-#    - get: cc-uploader
-#      passed: [bridge-unit-tests]
-#      trigger: true
-#    - get: tps
-#      passed: [bridge-unit-tests]
-#      trigger: true
-#  - task: bump-capi-release
-#    file: capi-ci/ci/git/bump_capi_release.yml
-#  - put: capi-release-develop
-#    params:
-#      repository: bumped/capi-release
-#      rebase: true
+- name: bump-capi-release
+  plan:
+  - in_parallel:
+    - get: capi-ci
+    - get: capi-release
+      resource: capi-release-develop
+      passed: [verify-capi-release-commits]
+      trigger: true
+    - get: cloud_controller_ng
+      passed: [cc-unit-tests]
+      trigger: true
+    - get: diego-release
+      passed: [bridge-unit-tests]
+      params:
+        submodules:
+        - src/code.cloudfoundry.org/bbs
+        - src/code.cloudfoundry.org/lager
+        - src/code.cloudfoundry.org/locket
+    - get: cc-uploader
+      passed: [bridge-unit-tests]
+      trigger: true
+    - get: tps
+      passed: [bridge-unit-tests]
+      trigger: true
+  - task: bump-capi-release
+    file: capi-ci/ci/git/bump_capi_release.yml
+  - put: capi-release-develop
+    params:
+      repository: bumped/capi-release
+      rebase: true
 
 #- name: bump-bbs-protos
 #  plan:
@@ -625,8 +644,8 @@ jobs:
 - name: bridge-unit-tests
   plan:
   - in_parallel:
-#    - get: weekly-sunday
-#      trigger: true
+    - get: weekly-sunday
+      trigger: true
     - get: capi-release
       resource: capi-release-develop
       trigger: true
@@ -643,42 +662,32 @@ jobs:
   - task: run-bridge-unit-tests
     file: capi-ci/ci/test-unit/run_bridge_unit_tests.yml
 
-#- name: create-capi-release
-#  serial_groups: [version]
-#  serial: true
-#  plan:
-#  - in_parallel:
-#    - get: capi-release
-#      resource: capi-release-develop
-#      passed: [bump-capi-release, capi-release-template-tests]
-#      trigger: true
-#    - get: capi-ci
-#    - get: next-version
-#      resource: next-version
-#      params:
-#        pre: rc
-#    - get: cloud_controller_ng
-#      passed: [bump-capi-release]
-#  - put: next-version
-#    params:
-#      file: next-version/version
-#    on_failure:
-#      put: slack-alert
-#      params:
-#        text: '[create-capi-release] OH NO! Failed to update version'
-#  - task: create-release-tarball
-#    file: capi-ci/ci/bosh/create_capi_release.yml
-#    on_failure:
-#      put: slack-alert
-#      params:
-#        text: '[create-capi-release] OH NO! Failed to create tarball'
-#  - put: capi-release-tarball
-#    params:
-#      file: created-capi-release/capi-*.tgz
-#    on_failure:
-#      put: slack-alert
-#      params:
-#        text: '[create-capi-release] OH NO! Failed to upload tarball'
+- name: create-capi-release
+  serial_groups: [version]
+  serial: true
+  plan:
+  - in_parallel:
+    - get: capi-release
+      resource: capi-release-develop
+      passed: [bump-capi-release, capi-release-template-tests]
+      trigger: true
+    - get: capi-ci
+    - get: next-version
+      resource: next-version
+      params:
+        pre: rc
+    - get: cloud_controller_ng
+      passed: [bump-capi-release]
+  - put: next-version
+    params:
+      file: next-version/version
+  - task: create-release-tarball
+    file: capi-ci/ci/bosh/create_capi_release.yml
+    params:
+      file: created-capi-release/capi-*.tgz
+  - put: capi-release-tarball
+    params:
+      file: created-capi-release/capi-*.tgz
 
 #- name: update-bosh-mulan
 #  serial: true
@@ -2069,88 +2078,54 @@ jobs:
 #    params:
 #      ENVIRONMENT: kiki
 #      ON_OR_OFF: on
-#
-#- name: update-bosh-xena-mysql
-#  serial: true
-#  serial_groups: [xena-mysql]
-#  plan:
-#  - in_parallel:
-#    - get: cf-deployment-concourse-tasks
-#      resource: cf-deployment-concourse-tasks
-#    - get: xena-mysql-bbl-state
-#    - get: capi-ci
-#    - get: capi-ci-private
-#    - get: cf-deployment
+
+- name: bbl-up-asha-mysql
+  serial: true
+  serial_groups: [asha-mysql]
+  plan:
+  - in_parallel:
+    - get: cf-deployment-concourse-tasks
+      resource: cf-deployment-concourse-tasks
+    - get: asha-mysql-bbl-state
+    - get: capi-ci
+    - get: capi-ci-private
+    - get: cf-deployment
 #    - get: nightly
 #      trigger: true
-#    - get: bosh-deployment
-#  - task: seed-capi-ci-private
-#    file: capi-ci/ci/setup-environment/seed.yml
-#    params:
-#      ENVIRONMENT: xena-mysql
-#      DOMAIN: &xena-mysql-domain "xena-mysql.capi.land"
-#  - put: capi-ci-private
-#    params:
-#      repository: updated-capi-ci-private
-#      rebase: true
-#  - task: collect-ops-files
-#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
-#    input_mapping:
-#      base-ops-files: bosh-deployment
-#      new-ops-files: capi-ci
-#    params:
-#      NEW_OPS_FILES: bosh-director-operations/increase-persistent-disk.yml
-#  - task: update-bosh-xena-mysql
-#    file: cf-deployment-concourse-tasks/bbl-up/task.yml
-#    input_mapping:
-#      bbl-state: updated-capi-ci-private
-#      bbl-config: updated-capi-ci-private
-#    params: &update-bosh-xena-mysql-params
-#      BBL_STATE_DIR: "xena-mysql"
-#      BBL_IAAS: "gcp"
-#      BBL_CONFIG_DIR: "xena-mysql/bosh-lite-plan-patch"
-#      BBL_ENV_NAME: "xena-mysql"
-#      BBL_GCP_SERVICE_ACCOUNT_KEY: ((xena_gcp_json_key))
-#      BBL_GCP_PROJECT_ID: ((xena_gcp_project_id))
-#      BBL_GCP_ZONE: ((xena_gcp_zone))
-#      BBL_GCP_REGION: ((xena_gcp_region))
-#      IS_BOSH_LITE: true
-#      SKIP_LB_CREATION: true
-#      OPS_FILES: |
-#        base-ops-files/bosh-lite.yml
-#        base-ops-files/bosh-lite-runc.yml
-#        increase-persistent-disk.yml
-#    ensure:
-#      put: xena-mysql-bbl-state
-#      params:
-#        repository: updated-bbl-state
-#        rebase: true
+  - task: bbl-up-asha-mysql
+    file: cf-deployment-concourse-tasks/bbl-up/task.yml
+    input_mapping:
+      bbl-state: capi-ci-private
+      bbl-config: capi-ci-private
+    params: &update-bosh-xena-mysql-params
+      BBL_STATE_DIR: "asha-mysql"
+      BBL_IAAS: "gcp"
+      BBL_ENV_NAME: "asha-mysql"
+      BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-asha-service-account))
+      BBL_GCP_PROJECT_ID: app-runtime-interfaces-wg
+      BBL_GCP_REGION: europe-west3
+      BBL_LB_CERT: ((asha_lb.certificate))
+      BBL_LB_KEY: ((asha_lb.private_key))
+      LB_DOMAIN: &asha-mysql-domain "cf.asha.app-runtime-interfaces.ci.cloudfoundry.org"
+    ensure:
+      put: asha-mysql-bbl-state
+      params:
+        repository: updated-bbl-state
+        rebase: true
 #  - task: update-cloud-config
 #    file: capi-ci/ci/bosh/update_cloud_config.yml
 #    input_mapping:
 #      bbl-state: updated-bbl-state
 #      cloud-config: cf-deployment
 #    params:
-#      BBL_STATE_DIR: "xena-mysql"
+#      BBL_STATE_DIR: "asha-mysql"
 #      CLOUD_CONFIG_PATH: iaas-support/bosh-lite/cloud-config.yml
-#  - task: create-dns-record
-#    attempts: 5
-#    file: capi-ci/ci/bbl-tasks/create-dns-record.yml
-#    input_mapping:
-#      bbl-state: updated-bbl-state
-#    params:
-#      BBL_STATE_DIR: "xena-mysql"
-#      DNS_DOMAIN: *xena-mysql-domain
-#      GCP_DNS_SERVICE_ACCOUNT_KEY: ((dns_gcp_json_key))
-#      GCP_PROJECT_ID: ((dns_gcp_project_id))
-#      SHARED_DNS_ZONE_NAME: "capi-land"
-#      IS_BOSH_LITE: true
-#  - task: run-bosh-cleanup
-#    file: capi-ci/ci/bbl-tasks/run-bosh-cleanup.yml
-#    input_mapping:
-#      bbl-state: updated-bbl-state
-#    params:
-#      BBL_STATE_DIR: "xena-mysql"
+  - task: run-bosh-cleanup
+    file: capi-ci/ci/bbl-tasks/run-bosh-cleanup.yml
+    input_mapping:
+      bbl-state: updated-bbl-state
+    params:
+      BBL_STATE_DIR: "asha-mysql"
 #
 #- name: update-bosh-gabrielle-postgres
 #  serial: true
@@ -2705,32 +2680,30 @@ jobs:
 #      ENVIRONMENT: rey-gcs-storage
 #      ON_OR_OFF: on
 #
-#- name: bbl-destroy-xena-mysql
-#  serial: true
-#  serial_groups: [xena-mysql]
-#  plan:
-#  - in_parallel:
-#    - get: cf-deployment-concourse-tasks
-#      resource: cf-deployment-concourse-tasks
-#    - get: rey-gcs-storage-bbl-state
-#    - get: capi-ci
-#    - get: capi-ci-private
-#    - get: cf-deployment
-#    - get: bosh-deployment
-#  - task: bbl-destroy-xena-mysql
-#    file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
-#    input_mapping:
-#      bbl-state: capi-ci-private
-#      bbl-config: capi-ci-private
-#    params:
-#      BBL_STATE_DIR: "xena-mysql"
-#      BBL_GCP_SERVICE_ACCOUNT_KEY: ((xena_gcp_json_key))
-#    ensure:
-#      put: xena-mysql-bbl-state
-#      params:
-#        repository: updated-bbl-state
-#        rebase: true
-#
+- name: bbl-destroy-asha-mysql
+  serial: true
+  serial_groups: [asha-mysql]
+  plan:
+  - in_parallel:
+    - get: cf-deployment-concourse-tasks
+      resource: cf-deployment-concourse-tasks
+    - get: asha-mysql-bbl-state
+    - get: capi-ci
+    - get: capi-ci-private
+  - task: bbl-destroy-asha-mysql
+    file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
+    input_mapping:
+      bbl-state: capi-ci-private
+      bbl-config: capi-ci-private
+    params:
+      BBL_STATE_DIR: "asha-mysql"
+      BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-asha-service-account))
+    ensure:
+      put: asha-mysql-bbl-state
+      params:
+        repository: updated-bbl-state
+        rebase: true
+
 #- name: bbl-destroy-rey-gcs-storage
 #  serial: true
 #  serial_groups: [rey-gcs-storage]
@@ -2858,258 +2831,199 @@ jobs:
 #  - put: capi-release-ci-passed
 #    params:
 #      repository: capi-release
+#
 
-#- name: xena-mysql-drats
-#  serial: true
-#  serial_groups: [xena-mysql]
-#  plan:
-#  - in_parallel:
-#    - get: cloud_controller_ng
-#      passed: [create-capi-release]
-#    - get: cf-deployment
-#      resource: cf-deployment
-#    - get: capi-ci
-#    - get: capi-ci-private
-#    - get: xena-mysql-bbl-state
-#    - get: cf-deployment-concourse-tasks
-#      resource: cf-deployment-concourse-tasks
-#    - get: capi-release
-#      resource: capi-release-develop
-#      passed: [create-capi-release]
-#    - get: capi-release-tarball
-#      passed: [create-capi-release]
-#      trigger: true
-#    - get: drats
-#    - get: bbr-github-release
-#    - get: staticfile-app
-#  - task: stemcell-upload
-#    file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
-#    input_mapping:
-#      bbl-state: capi-ci-private
-#    params:
-#      BBL_STATE_DIR: xena-mysql
-#      INFRASTRUCTURE: bosh-lite
-#  - task: upload-capi-release-tarball
-#    file: capi-ci/ci/bosh/upload-release.yml
-#    input_mapping:
-#      bbl-state: xena-mysql-bbl-state
-#      release-tarball: capi-release-tarball
-#    params:
-#      BBL_STATE_DIR: "xena-mysql"
-#  - task: delete-deployment
-#    file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
-#    input_mapping:
-#      bbl-state: xena-mysql-bbl-state
-#    params:
-#      BBL_STATE_DIR: xena-mysql
-#      IGNORE_ERRORS: true
-#  - task: collect-ops-files
-#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
-#    input_mapping:
-#      base-ops-files: cf-deployment
-#      new-ops-files: capi-ci
-#    params:
-#      NEW_OPS_FILES: |
-#        cf-deployment-operations/skip-cert-verify.yml
-#        cf-deployment-operations/temporary/capi-bbr-enable-bpm.yml
-#        cf-deployment-operations/use-latest-capi.yml
-#        cf-deployment-operations/scale-up-cloud-controller.yml
-#  - task: deploy
-#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
-#    input_mapping:
-#      bbl-state: capi-ci-private
-#      ops-files: collected-ops-files
-#      vars-files: capi-ci-private
-#    params:
-#      BBL_STATE_DIR: xena-mysql
-#      SYSTEM_DOMAIN: *xena-mysql-domain
-#      OPS_FILES: |
-#        skip-cert-verify.yml
-#        base-ops-files/operations/bosh-lite.yml
-#        base-ops-files/operations/backup-and-restore/enable-backup-restore.yml
-#        capi-bbr-enable-bpm.yml
-#        base-ops-files/operations/use-compiled-releases.yml
-#        use-latest-capi.yml
-#        scale-up-cloud-controller.yml
-#  - task: extract-bbl-environment
-#    file: capi-ci/ci/bbl-tasks/extract_bbl_environment.yml
-#    params:
-#      ENV_NAME: xena-mysql
-#  - task: run-drats
-#    file: capi-ci/ci/drats/run-drats.yml
-#    privileged: true # necessary for sshuttle util
-#    input_mapping:
-#      bbr-binary-release: bbr-github-release
-#    params:
-#      CF_API_URL: https://api.xena-mysql.capi.land
-#      SKIP_SUITE_NAME: "cf-nfsbroker|cf-credhub|cf-smbbroker"
-#      BBL_STATE_DIR: "xena-mysql"
-#  - task: seed-app-data # encrypt app env vars with initial database_encryption key/current_key_label
-#    file: capi-ci/ci/cf/push-app.yml
-#    params:
-#      CF_API_URL: https://api.xena-mysql.capi.land
-#      APP_NAME: teenager
-#      APP_ENV_VAR_NAME: pupa
-#      APP_ENV_VAR_VALUE: chrysalis
-#      BBL_STATE_DIR: xena-mysql
-#  - task: collect-ops-files
-#    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
-#    input_mapping:
-#      base-ops-files: cf-deployment
-#      new-ops-files: capi-ci
-#    params:
-#      NEW_OPS_FILES: &xena-mysql-ops-to-collect |
-#        cf-deployment-operations/skip-cert-verify.yml
-#        cf-deployment-operations/temporary/capi-bbr-enable-bpm.yml
-#        cf-deployment-operations/use-latest-capi.yml
-#        cf-deployment-operations/scale-up-cloud-controller.yml
-#        cf-deployment-operations/rotate-cc-database-key/add-database-encryption-keys.yml
-#        cf-deployment-operations/rotate-cc-database-key/change-current-database-encryption-key.yml
-#        cf-deployment-operations/rotate-cc-database-key/remove-old-key.yml
-#        cf-deployment-operations/rotate-cc-database-key/add-database-encryption-keys-new-format.yml
-#        cf-deployment-operations/rotate-cc-database-key/change-current-database-encryption-key-new-format.yml
-#        cf-deployment-operations/rotate-cc-database-key/remove-old-key-new-format.yml
-#  - task: deploy
-#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
-#    input_mapping:
-#      bbl-state: capi-ci-private
-#      ops-files: collected-ops-files
-#      vars-files: capi-ci-private
-#    params:
-#      BBL_STATE_DIR: xena-mysql
-#      SYSTEM_DOMAIN: *xena-mysql-domain
-#      OPS_FILES: |
-#        skip-cert-verify.yml
-#        base-ops-files/operations/bosh-lite.yml
-#        base-ops-files/operations/backup-and-restore/enable-backup-restore.yml
-#        capi-bbr-enable-bpm.yml
-#        base-ops-files/operations/use-compiled-releases.yml
-#        use-latest-capi.yml
-#        scale-up-cloud-controller.yml
-#        add-database-encryption-keys.yml
-#        change-current-database-encryption-key.yml
-#  - task: seed-app-data # encrypt app env vars with changed database_encryption key/current_key_label
-#    file: capi-ci/ci/cf/push-app.yml
-#    params:
-#      CF_API_URL: https://api.xena-mysql.capi.land
-#      APP_NAME: mature
-#      APP_ENV_VAR_NAME: transcendant
-#      APP_ENV_VAR_VALUE: butterfly
-#      BBL_STATE_DIR: xena-mysql
-#  - task: rotate-db-encryption-key
-#    file: cf-deployment-concourse-tasks/run-errand/task.yml
-#    input_mapping:
-#      bbl-state: capi-ci-private
-#    params:
-#      ERRAND_NAME: "rotate-cc-database-key"
-#      BBL_STATE_DIR: xena-mysql
-#  - task: deploy
-#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
-#    input_mapping:
-#      bbl-state: capi-ci-private
-#      ops-files: collected-ops-files
-#      vars-files: capi-ci-private
-#    params:
-#      BBL_STATE_DIR: xena-mysql
-#      SYSTEM_DOMAIN: *xena-mysql-domain
-#      OPS_FILES: &xena-mysql-ops-files |
-#        skip-cert-verify.yml
-#        base-ops-files/operations/bosh-lite.yml
-#        base-ops-files/operations/backup-and-restore/enable-backup-restore.yml
-#        base-ops-files/operations/use-compiled-releases.yml
-#        use-latest-capi.yml
-#        scale-up-cloud-controller.yml
-#        add-database-encryption-keys.yml
-#        change-current-database-encryption-key.yml
-#        remove-old-key.yml
-#  - in_parallel:
-#    - task: verify-env-vars
-#      file: capi-ci/ci/cf/verify-env-vars.yml
+- name: asha-mysql-deploy-cf
+  serial: true
+  serial_groups: [asha-mysql]
+  plan:
+    - in_parallel:
+        - get: cloud_controller_ng
+          passed: [create-capi-release]
+        - get: cf-deployment
+          resource: cf-deployment
+        - get: capi-ci
+        - get: capi-ci-private
+        - get: cf-deployment-concourse-tasks
+          resource: cf-deployment-concourse-tasks
+        - get: capi-release
+          resource: capi-release-develop
+          passed: [create-capi-release]
+        - get: capi-release-tarball
+          passed: [create-capi-release]
+          trigger: true
+        - get: asha-mysql-bbl-state
+    - task: stemcell-upload
+      file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
+      input_mapping:
+        bbl-state: capi-ci-private
+      params:
+        BBL_STATE_DIR: asha-mysql
+    - task: upload-capi-release-tarball
+      file: capi-ci/ci/bosh/upload-release.yml
+      input_mapping:
+        bbl-state: asha-mysql-bbl-state
+        release-tarball: capi-release-tarball
+      params:
+        BBL_STATE_DIR: asha-mysql
+#    - task: delete-deployment
+#      file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+#      input_mapping:
+#        bbl-state: asha-mysql-bbl-state
 #      params:
-#        CF_API_URL: https://api.xena-mysql.capi.land
-#        APP_NAME: teenager
-#        APP_ENV_VAR_NAME: pupa
-#        APP_ENV_VAR_VALUE: chrysalis
-#        BBL_STATE_DIR: xena-mysql
-#    - task: verify-env-vars
-#      file: capi-ci/ci/cf/verify-env-vars.yml
-#      params:
-#        CF_API_URL: https://api.xena-mysql.capi.land
-#        APP_NAME: mature
-#        APP_ENV_VAR_NAME: transcendant
-#        APP_ENV_VAR_VALUE: butterfly
-#        BBL_STATE_DIR: xena-mysql
-#  ## END OF OLD KEY FORMAT TESTS
-#  - task: deploy
-#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
-#    input_mapping:
-#      bbl-state: capi-ci-private
-#      ops-files: collected-ops-files
-#      vars-files: capi-ci-private
-#    params:
-#      BBL_STATE_DIR: xena-mysql
-#      SYSTEM_DOMAIN: *xena-mysql-domain
-#      OPS_FILES: |
-#        skip-cert-verify.yml
-#        base-ops-files/operations/bosh-lite.yml
-#        base-ops-files/operations/backup-and-restore/enable-backup-restore.yml
-#        capi-bbr-enable-bpm.yml
-#        base-ops-files/operations/use-compiled-releases.yml
-#        use-latest-capi.yml
-#        scale-up-cloud-controller.yml
-#        add-database-encryption-keys-new-format.yml
-#        change-current-database-encryption-key-new-format.yml
-#  - task: seed-app-data # encrypt app env vars with changed database_encryption key/current_key_label
-#    file: capi-ci/ci/cf/push-app.yml
-#    params:
-#      CF_API_URL: https://api.xena-mysql.capi.land
-#      APP_NAME: mature-new
-#      APP_ENV_VAR_NAME: transcendant
-#      APP_ENV_VAR_VALUE: butterfly
-#      BBL_STATE_DIR: xena-mysql
-#  - task: rotate-db-encryption-key
-#    file: cf-deployment-concourse-tasks/run-errand/task.yml
-#    input_mapping:
-#      bbl-state: capi-ci-private
-#    params:
-#      ERRAND_NAME: "rotate-cc-database-key"
-#      BBL_STATE_DIR: xena-mysql
-#  - task: deploy
-#    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
-#    input_mapping:
-#      bbl-state: capi-ci-private
-#      ops-files: collected-ops-files
-#      vars-files: capi-ci-private
-#    params:
-#      BBL_STATE_DIR: xena-mysql
-#      SYSTEM_DOMAIN: *xena-mysql-domain
-#      OPS_FILES: &xena-mysql-ops-files |
-#        skip-cert-verify.yml
-#        base-ops-files/operations/bosh-lite.yml
-#        base-ops-files/operations/backup-and-restore/enable-backup-restore.yml
-#        base-ops-files/operations/use-compiled-releases.yml
-#        use-latest-capi.yml
-#        scale-up-cloud-controller.yml
-#        add-database-encryption-keys-new-format.yml
-#        change-current-database-encryption-key-new-format.yml
-#        remove-old-key-new-format.yml
-#  - in_parallel:
-#    - task: verify-env-vars
-#      file: capi-ci/ci/cf/verify-env-vars.yml
-#      params:
-#        CF_API_URL: https://api.xena-mysql.capi.land
-#        APP_NAME: teenager
-#        APP_ENV_VAR_NAME: pupa
-#        APP_ENV_VAR_VALUE: chrysalis
-#        BBL_STATE_DIR: xena-mysql
-#    - task: verify-env-vars
-#      file: capi-ci/ci/cf/verify-env-vars.yml
-#      params:
-#        CF_API_URL: https://api.xena-mysql.capi.land
-#        APP_NAME: mature-new
-#        APP_ENV_VAR_NAME: transcendant
-#        APP_ENV_VAR_VALUE: butterfly
-#        BBL_STATE_DIR: xena-mysql
+#        BBL_STATE_DIR: asha-mysql
+#        IGNORE_ERRORS: true
+    - task: collect-ops-files
+      file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+      input_mapping:
+        base-ops-files: cf-deployment
+        new-ops-files: capi-ci
+      params:
+        NEW_OPS_FILES: |
+          cf-deployment-operations/use-latest-capi.yml
+          cf-deployment-operations/scale-up-cloud-controller.yml
+          cf-deployment-operations/rotate-cc-database-key/add-database-encryption-keys.yml
+          cf-deployment-operations/scale-up-cells.yml
+          cf-deployment-operations/performance/scale-generic-worker-processes.yml
+          cf-deployment-operations/use-latest-capi.yml
+          cf-deployment-operations/temporary/disable-uaa-get-requests.yml
+          cf-deployment-operations/seed-credhub-asg.yml
+          cf-deployment-operations/seed-uaa-asg.yml
+    - task: deploy
+      file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+      input_mapping:
+        bbl-state: capi-ci-private
+        ops-files: collected-ops-files
+        vars-files: capi-ci-private
+      params:
+        BBL_STATE_DIR: asha-mysql
+        SYSTEM_DOMAIN: *asha-mysql-domain
+        OPS_FILES: |
+          base-ops-files/operations/use-compiled-releases.yml
+          use-latest-capi.yml
+          scale-up-cloud-controller.yml
+          add-database-encryption-keys.yml
+          scale-up-cells.yml
+          scale-generic-worker-processes.yml
+          disable-uaa-get-requests.yml
+          seed-credhub-asg.yml
+          base-ops-files/operations/scale-database-cluster.yml
+          base-ops-files/operations/test/speed-up-dynamic-asgs.yml
+          seed-uaa-asg.yml
+
+- name: asha-mysql-tests
+  serial: true
+  serial_groups: [asha-mysql]
+  plan:
+  - in_parallel:
+    - get: capi-ci
+    - get: capi-ci-private
+    - get: cf-deployment-concourse-tasks
+      resource: cf-deployment-concourse-tasks
+    - get: capi-release-tarball
+      passed: [asha-mysql-deploy-cf]
+      trigger: true
+    - get: asha-mysql-bbl-state
+    - get: asha-mysql-integration-configs
+    - get: cf-acceptance-tests
+    - get: sync-integration-tests
+    - get: capi-bara-tests
+    - get: cf-cli
+  - task: updated-integration-configs
+    file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+    input_mapping:
+      bbl-state: asha-mysql-bbl-state
+      integration-configs: asha-mysql-integration-configs
+    params:
+      CATS_INTEGRATION_CONFIG_FILE: "asha-mysql/cats_integration_config.json"
+      BBL_STATE_DIR: asha-mysql
+      SYSTEM_DOMAIN: *asha-mysql-domain
+    ensure:
+      put: asha-mysql-integration-configs
+      params:
+        repository: updated-integration-configs
+        rebase: true
+  - task: updated-baras-integration-configs
+    file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+    input_mapping:
+      bbl-state: capi-ci-private
+      integration-configs: updated-integration-configs
+    params:
+      CATS_INTEGRATION_CONFIG_FILE: "asha-mysql/baras_integration_config.json"
+      BBL_STATE_DIR: asha-mysql
+      SYSTEM_DOMAIN: *asha-mysql-domain
+    ensure:
+      put: asha-mysql-integration-configs
+      params:
+        repository: updated-integration-configs
+        rebase: true
+  - task: enable-feature-flags
+    file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
+    input_mapping:
+      bbl-state: asha-mysql-bbl-state
+    params:
+      SYSTEM_DOMAIN: *asha-mysql-domain
+      BBL_STATE_DIR: asha-mysql
+      ENABLED_FEATURE_FLAGS: "diego_docker"
+  - task: cleanup-acceptance-test-leftovers
+    file: capi-ci/ci/acceptance-test-utils/cats_cleanup.yml
+    params:
+      CF_API_TARGET: &asha-mysql-api-url https://api.cf.asha.app-runtime-interfaces.ci.cloudfoundry.org
+      BBL_STATE_DIR: asha-mysql
+  - in_parallel:
+      - task: acceptance-tests
+        file: cf-deployment-concourse-tasks/run-cats/task.yml
+        input_mapping:
+          integration-config: updated-integration-configs
+        params:
+          NODES: 6
+          CONFIG_FILE_PATH: "asha-mysql/cats_integration_config.json"
+          CAPTURE_LOGS: true
+      - task: capi-bara-tests
+        file: capi-ci/ci/baras/run-baras.yml
+        input_mapping:
+          integration-config: updated-integration-configs
+        params:
+          NODES: 2
+          FLAKE_ATTEMPTS: 2
+          CONFIG_FILE_PATH: "asha-mysql/baras_integration_config.json"
+      - task: sync-integration-tests
+        file: sync-integration-tests/concourse/task_with_credhub.yml
+        input_mapping:
+          environment: capi-ci-private
+        params:
+          BOSH_DEPLOYMENT_NAME: cf
+          BOSH_API_INSTANCE: api/0
+          CF_API_TARGET: *asha-mysql-api-url
+          CF_SKIP_SSL_VALIDATION: true
+          CF_APPS_DOMAIN: *asha-mysql-domain
+          BBL_STATE_DIR: asha-mysql
+          USE_CREDHUB: true
+          RUN_REVISIONS_TESTS: true
+          FLAKE_ATTEMPTS: 2
+  - task: extract-bbl-environment
+    file: capi-ci/ci/bbl-tasks/extract_bbl_environment.yml
+    params:
+      ENV_NAME: asha-mysql
+
+- name: asha-mysql-destroy
+  serial: true
+  serial_groups: [asha-mysql]
+  plan:
+    - in_parallel:
+        - get: cf-deployment-concourse-tasks
+          resource: cf-deployment-concourse-tasks
+        - get: capi-release-tarball
+          passed: [asha-mysql-tests]
+          trigger: true
+        - get: asha-mysql-bbl-state
+    - task: delete-deployment
+      file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+      input_mapping:
+        bbl-state: asha-mysql-bbl-state
+      params:
+        BBL_STATE_DIR: asha-mysql
+        IGNORE_ERRORS: true
 #
 #- name: rotate-certs-xena
 #  serial: true
