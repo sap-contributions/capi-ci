@@ -829,19 +829,13 @@ jobs:
         - get: cf-deployment
     #    - get: nightly
     #      trigger: true
-    - task: collect-ops-files
-      file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
-      input_mapping:
-        base-ops-files: bosh-deployment
-        new-ops-files: capi-ci
-      params:
-        NEW_OPS_FILES: bosh-director-operations/add-relint-ca-to-bosh-truststore.yml
     - task: bbl-up-elsa-ha
       file: cf-deployment-concourse-tasks/bbl-up/task.yml
       input_mapping:
         bbl-state: capi-ci-private
         bbl-config: capi-ci-private
       params: &update-bosh-xena-mysql-params
+        BBL_CONFIG_DIR: elsa-ha/bbl-config
         BBL_STATE_DIR: "elsa-ha"
         BBL_IAAS: "gcp"
         BBL_ENV_NAME: "elsa-ha"
@@ -851,8 +845,6 @@ jobs:
         BBL_LB_CERT: ((elsa_lb.certificate))
         BBL_LB_KEY: ((elsa_lb.private_key))
         LB_DOMAIN: &elsa-ha-domain "cf.elsa.app-runtime-interfaces.ci.cloudfoundry.org"
-        OPS_FILES: |
-          add-relint-ca-to-bosh-truststore.yml
       ensure:
         put: elsa-ha-bbl-state
         params:
@@ -891,19 +883,13 @@ jobs:
     - get: cf-deployment
 #    - get: nightly
 #      trigger: true
-  - task: collect-ops-files
-    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
-    input_mapping:
-      base-ops-files: bosh-deployment
-      new-ops-files: capi-ci
-    params:
-      NEW_OPS_FILES: bosh-director-operations/add-relint-ca-to-bosh-truststore.yml
   - task: bbl-up-asha-mysql
     file: cf-deployment-concourse-tasks/bbl-up/task.yml
     input_mapping:
       bbl-state: capi-ci-private
       bbl-config: capi-ci-private
     params: &update-bosh-xena-mysql-params
+      BBL_CONFIG_DIR: asha-mysql/bbl-config
       BBL_STATE_DIR: "asha-mysql"
       BBL_IAAS: "gcp"
       BBL_ENV_NAME: "asha-mysql"
@@ -913,8 +899,6 @@ jobs:
       BBL_LB_CERT: ((asha_lb.certificate))
       BBL_LB_KEY: ((asha_lb.private_key))
       LB_DOMAIN: &asha-mysql-domain "cf.asha.app-runtime-interfaces.ci.cloudfoundry.org"
-      OPS_FILES: |
-        add-relint-ca-to-bosh-truststore.yml
     ensure:
       put: asha-mysql-bbl-state
       params:
@@ -1286,8 +1270,6 @@ jobs:
           base-ops-files/operations/test/speed-up-dynamic-asgs.yml
           skip-cert-verify-on-windows-cell.yml
           add-database-encryption-keys.yml
-          disable-skip-cert-verify.yml
-          disable-skip-cert-verify-iso-seg.yml
           seed-uaa-asg.yml
         VARS_FILES: elsa-ha/gcs-storage-vars.yml
 
