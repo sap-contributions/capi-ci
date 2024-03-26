@@ -23,6 +23,7 @@ groups:
   - asha-mysql-tests
   - asha-mysql-destroy-cf
   - elsa-ha-deploy-cf
+  - elsa-ha-tests
 #  - mulan-postgres
 #  - elsa-HA
 #  - kiki-back-compat-migrations
@@ -386,13 +387,13 @@ resources:
     username: ((ari-wg-gitbot-username))
     password: ((ari-wg-gitbot-token))
 
-#- name: elsa-ha-integration-configs
-#  type: git
-#  source:
-#    branch: main
-#    uri: https://github.com/cloudfoundry/capi-ci-private.git
-#    username: ((ari-wg-gitbot-username))
-#    password: ((ari-wg-gitbot-token))
+- name: elsa-ha-integration-configs
+  type: git
+  source:
+    branch: main
+    uri: https://github.com/cloudfoundry/capi-ci-private.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
 
 ## Kiki resources
 #- name: kiki-bbl-state
@@ -828,6 +829,13 @@ jobs:
         - get: cf-deployment
     #    - get: nightly
     #      trigger: true
+    - task: collect-ops-files
+      file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+      input_mapping:
+        base-ops-files: bosh-deployment
+        new-ops-files: capi-ci
+      params:
+        NEW_OPS_FILES: bosh-director-operations/add-relint-ca-to-bosh-truststore.yml
     - task: bbl-up-elsa-ha
       file: cf-deployment-concourse-tasks/bbl-up/task.yml
       input_mapping:
@@ -843,6 +851,8 @@ jobs:
         BBL_LB_CERT: ((elsa_lb.certificate))
         BBL_LB_KEY: ((elsa_lb.private_key))
         LB_DOMAIN: &elsa-ha-domain "cf.elsa.app-runtime-interfaces.ci.cloudfoundry.org"
+        OPS_FILES: |
+          add-relint-ca-to-bosh-truststore.yml
       ensure:
         put: elsa-ha-bbl-state
         params:
@@ -881,6 +891,13 @@ jobs:
     - get: cf-deployment
 #    - get: nightly
 #      trigger: true
+  - task: collect-ops-files
+    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+    input_mapping:
+      base-ops-files: bosh-deployment
+      new-ops-files: capi-ci
+    params:
+      NEW_OPS_FILES: bosh-director-operations/add-relint-ca-to-bosh-truststore.yml
   - task: bbl-up-asha-mysql
     file: cf-deployment-concourse-tasks/bbl-up/task.yml
     input_mapping:
@@ -896,6 +913,8 @@ jobs:
       BBL_LB_CERT: ((asha_lb.certificate))
       BBL_LB_KEY: ((asha_lb.private_key))
       LB_DOMAIN: &asha-mysql-domain "cf.asha.app-runtime-interfaces.ci.cloudfoundry.org"
+      OPS_FILES: |
+        add-relint-ca-to-bosh-truststore.yml
     ensure:
       put: asha-mysql-bbl-state
       params:
@@ -994,6 +1013,7 @@ jobs:
     - get: capi-release-tarball
       passed:
         - asha-mysql-destroy-cf
+        - elsa-ha-tests
       trigger: true
   - put: capi-release-ci-passed
     params:
@@ -1234,7 +1254,6 @@ jobs:
           cf-deployment-operations/temporary/disable-uaa-get-requests.yml
           cf-deployment-operations/seed-credhub-asg.yml
           cf-deployment-operations/seed-uaa-asg.yml
-          cf-deployment-operations/skip-cert-verify-on-windows-cell.yml
           cf-deployment-operations/rotate-cc-database-key/add-database-encryption-keys.yml
           cf-deployment-operations/skip-cert-verify-on-windows-cell.yml
           cf-deployment-operations/disable-skip-cert-verify.yml
@@ -1252,8 +1271,8 @@ jobs:
           base-ops-files/operations/add-persistent-isolation-segment-diego-cell.yml
           base-ops-files/operations/windows2019-cell.yml
           base-ops-files/operations/use-online-windows2019fs.yml
-          skip-cert-verify-on-windows-cell.yml
           base-ops-files/operations/use-compiled-releases.yml
+          base-ops-files/operations/experimental/use-compiled-releases-windows.yml
           base-ops-files/operations/use-external-blobstore.yml
           base-ops-files/operations/use-gcs-blobstore-service-account.yml
           use-latest-capi.yml
@@ -1265,15 +1284,111 @@ jobs:
           seed-credhub-asg.yml
           base-ops-files/operations/scale-database-cluster.yml
           base-ops-files/operations/test/speed-up-dynamic-asgs.yml
-          seed-uaa-asg.yml
           skip-cert-verify-on-windows-cell.yml
           add-database-encryption-keys.yml
           disable-skip-cert-verify.yml
           disable-skip-cert-verify-iso-seg.yml
           seed-uaa-asg.yml
-          base-ops-files/operations/experimental/use-mysql-version-8.0.yml
+        VARS_FILES: elsa-ha/gcs-storage-vars.yml
 
-
+- name: elsa-ha-tests
+  serial: true
+  serial_groups: [elsa-ha]
+  plan:
+    - in_parallel:
+        - get: capi-ci
+        - get: capi-ci-private
+        - get: cf-deployment-concourse-tasks
+          resource: cf-deployment-concourse-tasks
+        - get: capi-release-tarball
+          passed: [elsa-ha-deploy-cf]
+          trigger: true
+        - get: elsa-ha-bbl-state
+        - get: elsa-ha-integration-configs
+        - get: cf-acceptance-tests
+        - get: sync-integration-tests
+        - get: capi-bara-tests
+        - get: cf-cli
+    - task: updated-integration-configs
+      file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+      input_mapping:
+        bbl-state: elsa-ha-bbl-state
+        integration-configs: elsa-ha-integration-configs
+      params:
+        CATS_INTEGRATION_CONFIG_FILE: "elsa-ha/cats_integration_config.json"
+        BBL_STATE_DIR: elsa-ha
+        SYSTEM_DOMAIN: *elsa-ha-domain
+      ensure:
+        put: elsa-ha-integration-configs
+        params:
+          repository: updated-integration-configs
+          rebase: true
+    - task: updated-baras-integration-configs
+      file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+      input_mapping:
+        bbl-state: capi-ci-private
+        integration-configs: updated-integration-configs
+      params:
+        CATS_INTEGRATION_CONFIG_FILE: "elsa-ha/baras_integration_config.json"
+        BBL_STATE_DIR: elsa-ha
+        SYSTEM_DOMAIN: *elsa-ha-domain
+      ensure:
+        put: elsa-ha-integration-configs
+        params:
+          repository: updated-integration-configs
+          rebase: true
+    - task: enable-feature-flags
+      file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
+      input_mapping:
+        bbl-state: elsa-ha-bbl-state
+      params:
+        SYSTEM_DOMAIN: *elsa-ha-domain
+        BBL_STATE_DIR: elsa-ha
+        ENABLED_FEATURE_FLAGS: "diego_docker"
+    - task: cleanup-acceptance-test-leftovers
+      file: capi-ci/ci/acceptance-test-utils/cats_cleanup.yml
+      params:
+        CF_API_TARGET: &elsa-ha-api-url https://api.cf.elsa.app-runtime-interfaces.ci.cloudfoundry.org
+        BBL_STATE_DIR: elsa-ha
+    - in_parallel:
+        - task: acceptance-tests
+          file: cf-deployment-concourse-tasks/run-cats/task.yml
+          input_mapping:
+            integration-config: updated-integration-configs
+          params:
+            NODES: 6
+            CONFIG_FILE_PATH: "elsa-ha/cats_integration_config.json"
+            CAPTURE_LOGS: true
+        - task: capi-bara-tests
+          file: capi-ci/ci/baras/run-baras.yml
+          input_mapping:
+            integration-config: updated-integration-configs
+          params:
+            NODES: 2
+            FLAKE_ATTEMPTS: 2
+            CONFIG_FILE_PATH: "elsa-ha/baras_integration_config.json"
+        - task: sync-integration-tests
+          file: sync-integration-tests/concourse/task_with_credhub.yml
+          input_mapping:
+            environment: capi-ci-private
+          params:
+            BOSH_DEPLOYMENT_NAME: cf
+            BOSH_API_INSTANCE: api/0
+            CF_API_TARGET: *elsa-ha-api-url
+            CF_SKIP_SSL_VALIDATION: true
+            CF_APPS_DOMAIN: *elsa-ha-domain
+            BBL_STATE_DIR: elsa-ha
+            USE_CREDHUB: true
+            RUN_REVISIONS_TESTS: true
+            FLAKE_ATTEMPTS: 2
+    - task: extract-bbl-environment
+      file: capi-ci/ci/bbl-tasks/extract_bbl_environment.yml
+      params:
+        ENV_NAME: elsa-ha
+    - task: run-blobstore-benchmarks
+      file: capi-ci/ci/benchmarks/run-blobstore-benchmarks.yml
+      params:
+        BBL_STATE_DIR: elsa-ha
 #
 #- name: thirtyfirstly-warning
 #  plan:
