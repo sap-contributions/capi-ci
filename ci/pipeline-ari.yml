@@ -345,7 +345,7 @@ resources:
 - name: capi-bara-tests
   type: git
   source:
-    branch: main
+    branch: droplet-curl
     uri: https://github.com/cloudfoundry/capi-bara-tests.git
     username: ((ari-wg-gitbot-username))
     password: ((ari-wg-gitbot-token))
@@ -835,8 +835,8 @@ jobs:
         bbl-state: capi-ci-private
         bbl-config: capi-ci-private
       params: &update-bosh-xena-mysql-params
-        BBL_CONFIG_DIR: elsa-ha/bbl-config
-        BBL_STATE_DIR: "elsa-ha"
+        BBL_CONFIG_DIR: "elsa-ha/bbl-config"
+        BBL_STATE_DIR: "elsa-ha/bbl-state"
         BBL_IAAS: "gcp"
         BBL_ENV_NAME: "elsa-ha"
         BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-elsa-ha-service-account))
@@ -845,29 +845,30 @@ jobs:
         BBL_LB_CERT: ((elsa_lb.certificate))
         BBL_LB_KEY: ((elsa_lb.private_key))
         LB_DOMAIN: &elsa-ha-domain "cf.elsa.app-runtime-interfaces.ci.cloudfoundry.org"
+        TRUSTED_CA: ((relint_ca.certificate))
       ensure:
         put: elsa-ha-bbl-state
         params:
           repository: updated-bbl-state
           rebase: true
-    - task: create-dns-record
-      attempts: 3
-      file: capi-ci/ci/bbl-tasks/create-dns-record.yml
-      input_mapping:
-        bbl-state: updated-bbl-state
-      params:
-        BBL_STATE_DIR: "elsa-ha"
-        DNS_DOMAIN: *elsa-ha-domain
-        GCP_DNS_SERVICE_ACCOUNT_KEY: ((capi-bbl-dns-service-account))
-        GCP_PROJECT_ID: app-runtime-interfaces-wg
-        SHARED_DNS_ZONE_NAME: "app-runtime-interfaces"
-        IS_BOSH_LITE: true
+#    - task: create-dns-record
+#      attempts: 3
+#      file: capi-ci/ci/bbl-tasks/create-dns-record.yml
+#      input_mapping:
+#        bbl-state: updated-bbl-state
+#      params:
+#        BBL_CONFIG_DIR: "elsa-ha/bbl-config"
+#        BBL_STATE_DIR: "elsa-ha/bbl-state"
+#        DNS_DOMAIN: *elsa-ha-domain
+#        GCP_DNS_SERVICE_ACCOUNT_KEY: ((capi-bbl-dns-service-account))
+#        GCP_PROJECT_ID: app-runtime-interfaces-wg
+#        SHARED_DNS_ZONE_NAME: "app-runtime-interfaces"
     - task: run-bosh-cleanup
       file: capi-ci/ci/bbl-tasks/run-bosh-cleanup.yml
       input_mapping:
         bbl-state: updated-bbl-state
       params:
-        BBL_STATE_DIR: "elsa-ha"
+        BBL_STATE_DIR: "elsa-ha/bbl-state"
 
 
 - name: bbl-up-asha-mysql
@@ -889,8 +890,8 @@ jobs:
       bbl-state: capi-ci-private
       bbl-config: capi-ci-private
     params: &update-bosh-xena-mysql-params
-      BBL_CONFIG_DIR: asha-mysql/bbl-config
-      BBL_STATE_DIR: "asha-mysql"
+      BBL_CONFIG_DIR: "asha-mysql/bbl-config"
+      BBL_STATE_DIR: "asha-mysql/bbl-state"
       BBL_IAAS: "gcp"
       BBL_ENV_NAME: "asha-mysql"
       BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-asha-service-account))
@@ -910,7 +911,7 @@ jobs:
 #    input_mapping:
 #      bbl-state: updated-bbl-state
 #    params:
-#      BBL_STATE_DIR: "asha-mysql"
+#      BBL_STATE_DIR: "asha-mysql/bbl-state"
 #      DNS_DOMAIN: *asha-mysql-domain
 #      GCP_DNS_SERVICE_ACCOUNT_KEY: ((capi-bbl-dns-service-account))
 #      GCP_PROJECT_ID: app-runtime-interfaces-wg
@@ -920,7 +921,7 @@ jobs:
     input_mapping:
       bbl-state: updated-bbl-state
     params:
-      BBL_STATE_DIR: "asha-mysql"
+      BBL_STATE_DIR: "asha-mysql/bbl-state"
 
 - name: manual-bbl-destroy-asha-mysql
   serial: true
@@ -938,7 +939,7 @@ jobs:
       bbl-state: capi-ci-private
       bbl-config: capi-ci-private
     params:
-      BBL_STATE_DIR: "asha-mysql"
+      BBL_STATE_DIR: "asha-mysql/bbl-state"
       BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-asha-service-account))
     ensure:
       put: asha-mysql-bbl-state
@@ -962,7 +963,7 @@ jobs:
         bbl-state: capi-ci-private
         bbl-config: capi-ci-private
       params:
-        BBL_STATE_DIR: "elsa-ha"
+        BBL_STATE_DIR: "elsa-ha/bbl-state"
         BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-elsa-ha-service-account))
       ensure:
         put: elsa-ha-bbl-state
@@ -1029,14 +1030,14 @@ jobs:
       input_mapping:
         bbl-state: capi-ci-private
       params:
-        BBL_STATE_DIR: asha-mysql
+        BBL_STATE_DIR: "asha-mysql/bbl-state"
     - task: upload-capi-release-tarball
       file: capi-ci/ci/bosh/upload-release.yml
       input_mapping:
         bbl-state: asha-mysql-bbl-state
         release-tarball: capi-release-tarball
       params:
-        BBL_STATE_DIR: asha-mysql
+        BBL_STATE_DIR: "asha-mysql/bbl-state"
     - task: collect-ops-files
       file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
       input_mapping:
@@ -1060,7 +1061,7 @@ jobs:
         ops-files: collected-ops-files
         vars-files: capi-ci-private
       params:
-        BBL_STATE_DIR: asha-mysql
+        BBL_STATE_DIR: "asha-mysql/bbl-state"
         SYSTEM_DOMAIN: *asha-mysql-domain
         OPS_FILES: |
           base-ops-files/operations/use-compiled-releases.yml
@@ -1100,7 +1101,7 @@ jobs:
       integration-configs: asha-mysql-integration-configs
     params:
       CATS_INTEGRATION_CONFIG_FILE: "asha-mysql/cats_integration_config.json"
-      BBL_STATE_DIR: asha-mysql
+      BBL_STATE_DIR: "asha-mysql/bbl-state"
       SYSTEM_DOMAIN: *asha-mysql-domain
     ensure:
       put: asha-mysql-integration-configs
@@ -1114,7 +1115,7 @@ jobs:
       integration-configs: updated-integration-configs
     params:
       CATS_INTEGRATION_CONFIG_FILE: "asha-mysql/baras_integration_config.json"
-      BBL_STATE_DIR: asha-mysql
+      BBL_STATE_DIR: "asha-mysql/bbl-state"
       SYSTEM_DOMAIN: *asha-mysql-domain
     ensure:
       put: asha-mysql-integration-configs
@@ -1127,20 +1128,20 @@ jobs:
       bbl-state: asha-mysql-bbl-state
     params:
       SYSTEM_DOMAIN: *asha-mysql-domain
-      BBL_STATE_DIR: asha-mysql
+      BBL_STATE_DIR: "asha-mysql/bbl-state"
       ENABLED_FEATURE_FLAGS: "diego_docker"
   - task: cleanup-acceptance-test-leftovers
     file: capi-ci/ci/acceptance-test-utils/cats_cleanup.yml
     params:
       CF_API_TARGET: &asha-mysql-api-url https://api.cf.asha.app-runtime-interfaces.ci.cloudfoundry.org
-      BBL_STATE_DIR: asha-mysql
+      BBL_STATE_DIR: "asha-mysql/bbl-state"
   - in_parallel:
       - task: acceptance-tests
         file: cf-deployment-concourse-tasks/run-cats/task.yml
         input_mapping:
           integration-config: updated-integration-configs
         params:
-          NODES: 6
+          NODES: 8
           CONFIG_FILE_PATH: "asha-mysql/cats_integration_config.json"
           CAPTURE_LOGS: true
       - task: capi-bara-tests
@@ -1148,7 +1149,7 @@ jobs:
         input_mapping:
           integration-config: updated-integration-configs
         params:
-          NODES: 2
+          NODES: 4
           FLAKE_ATTEMPTS: 2
           CONFIG_FILE_PATH: "asha-mysql/baras_integration_config.json"
       - task: sync-integration-tests
@@ -1161,7 +1162,7 @@ jobs:
           CF_API_TARGET: *asha-mysql-api-url
           CF_SKIP_SSL_VALIDATION: true
           CF_APPS_DOMAIN: *asha-mysql-domain
-          BBL_STATE_DIR: asha-mysql
+          BBL_STATE_DIR: "asha-mysql/bbl-state"
           USE_CREDHUB: true
           RUN_REVISIONS_TESTS: true
           FLAKE_ATTEMPTS: 2
@@ -1186,7 +1187,7 @@ jobs:
       input_mapping:
         bbl-state: asha-mysql-bbl-state
       params:
-        BBL_STATE_DIR: asha-mysql
+        BBL_STATE_DIR: "asha-mysql/bbl-state"
         IGNORE_ERRORS: true
 
 - name: elsa-ha-deploy-cf
@@ -1214,14 +1215,14 @@ jobs:
       input_mapping:
         bbl-state: capi-ci-private
       params:
-        BBL_STATE_DIR: elsa-ha
+        BBL_STATE_DIR: "elsa-ha/bbl-state"
     - task: upload-capi-release-tarball
       file: capi-ci/ci/bosh/upload-release.yml
       input_mapping:
         bbl-state: elsa-ha-bbl-state
         release-tarball: capi-release-tarball
       params:
-        BBL_STATE_DIR: elsa-ha
+        BBL_STATE_DIR: "elsa-ha/bbl-state"
     - task: collect-ops-files
       file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
       input_mapping:
@@ -1239,7 +1240,6 @@ jobs:
           cf-deployment-operations/seed-credhub-asg.yml
           cf-deployment-operations/seed-uaa-asg.yml
           cf-deployment-operations/rotate-cc-database-key/add-database-encryption-keys.yml
-          cf-deployment-operations/skip-cert-verify-on-windows-cell.yml
           cf-deployment-operations/disable-skip-cert-verify.yml
           cf-deployment-operations/disable-skip-cert-verify-iso-seg.yml
     - task: deploy
@@ -1249,7 +1249,7 @@ jobs:
         ops-files: collected-ops-files
         vars-files: capi-ci-private
       params:
-        BBL_STATE_DIR: elsa-ha
+        BBL_STATE_DIR: "elsa-ha/bbl-state"
         SYSTEM_DOMAIN: *elsa-ha-domain
         OPS_FILES: |
           base-ops-files/operations/add-persistent-isolation-segment-diego-cell.yml
@@ -1268,9 +1268,10 @@ jobs:
           seed-credhub-asg.yml
           base-ops-files/operations/scale-database-cluster.yml
           base-ops-files/operations/test/speed-up-dynamic-asgs.yml
-          skip-cert-verify-on-windows-cell.yml
           add-database-encryption-keys.yml
           seed-uaa-asg.yml
+          disable-skip-cert-verify.yml
+          disable-skip-cert-verify-iso-seg.yml
         VARS_FILES: elsa-ha/gcs-storage-vars.yml
 
 - name: elsa-ha-tests
@@ -1298,7 +1299,7 @@ jobs:
         integration-configs: elsa-ha-integration-configs
       params:
         CATS_INTEGRATION_CONFIG_FILE: "elsa-ha/cats_integration_config.json"
-        BBL_STATE_DIR: elsa-ha
+        BBL_STATE_DIR: "elsa-ha/bbl-state"
         SYSTEM_DOMAIN: *elsa-ha-domain
       ensure:
         put: elsa-ha-integration-configs
@@ -1312,7 +1313,7 @@ jobs:
         integration-configs: updated-integration-configs
       params:
         CATS_INTEGRATION_CONFIG_FILE: "elsa-ha/baras_integration_config.json"
-        BBL_STATE_DIR: elsa-ha
+        BBL_STATE_DIR: "elsa-ha/bbl-state"
         SYSTEM_DOMAIN: *elsa-ha-domain
       ensure:
         put: elsa-ha-integration-configs
@@ -1325,20 +1326,20 @@ jobs:
         bbl-state: elsa-ha-bbl-state
       params:
         SYSTEM_DOMAIN: *elsa-ha-domain
-        BBL_STATE_DIR: elsa-ha
+        BBL_STATE_DIR: "elsa-ha/bbl-state"
         ENABLED_FEATURE_FLAGS: "diego_docker"
     - task: cleanup-acceptance-test-leftovers
       file: capi-ci/ci/acceptance-test-utils/cats_cleanup.yml
       params:
         CF_API_TARGET: &elsa-ha-api-url https://api.cf.elsa.app-runtime-interfaces.ci.cloudfoundry.org
-        BBL_STATE_DIR: elsa-ha
+        BBL_STATE_DIR: "elsa-ha/bbl-state"
     - in_parallel:
         - task: acceptance-tests
           file: cf-deployment-concourse-tasks/run-cats/task.yml
           input_mapping:
             integration-config: updated-integration-configs
           params:
-            NODES: 6
+            NODES: 8
             CONFIG_FILE_PATH: "elsa-ha/cats_integration_config.json"
             CAPTURE_LOGS: true
         - task: capi-bara-tests
@@ -1346,7 +1347,7 @@ jobs:
           input_mapping:
             integration-config: updated-integration-configs
           params:
-            NODES: 2
+            NODES: 4
             FLAKE_ATTEMPTS: 2
             CONFIG_FILE_PATH: "elsa-ha/baras_integration_config.json"
         - task: sync-integration-tests
@@ -1359,7 +1360,7 @@ jobs:
             CF_API_TARGET: *elsa-ha-api-url
             CF_SKIP_SSL_VALIDATION: true
             CF_APPS_DOMAIN: *elsa-ha-domain
-            BBL_STATE_DIR: elsa-ha
+            BBL_STATE_DIR: "elsa-ha/bbl-state"
             USE_CREDHUB: true
             RUN_REVISIONS_TESTS: true
             FLAKE_ATTEMPTS: 2
@@ -1370,7 +1371,7 @@ jobs:
     - task: run-blobstore-benchmarks
       file: capi-ci/ci/benchmarks/run-blobstore-benchmarks.yml
       params:
-        BBL_STATE_DIR: elsa-ha
+        BBL_STATE_DIR: "elsa-ha/bbl-state"
 #
 #- name: thirtyfirstly-warning
 #  plan:
