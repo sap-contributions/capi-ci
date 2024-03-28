@@ -345,7 +345,7 @@ resources:
 - name: capi-bara-tests
   type: git
   source:
-    branch: droplet-curl
+    branch: main
     uri: https://github.com/cloudfoundry/capi-bara-tests.git
     username: ((ari-wg-gitbot-username))
     password: ((ari-wg-gitbot-token))
@@ -1141,7 +1141,7 @@ jobs:
         input_mapping:
           integration-config: updated-integration-configs
         params:
-          NODES: 8
+          NODES: 10
           CONFIG_FILE_PATH: "asha-mysql/cats_integration_config.json"
           CAPTURE_LOGS: true
       - task: capi-bara-tests
@@ -1149,7 +1149,7 @@ jobs:
         input_mapping:
           integration-config: updated-integration-configs
         params:
-          NODES: 4
+          NODES: 6
           FLAKE_ATTEMPTS: 2
           CONFIG_FILE_PATH: "asha-mysql/baras_integration_config.json"
       - task: sync-integration-tests
@@ -1339,7 +1339,7 @@ jobs:
           input_mapping:
             integration-config: updated-integration-configs
           params:
-            NODES: 8
+            NODES: 10
             CONFIG_FILE_PATH: "elsa-ha/cats_integration_config.json"
             CAPTURE_LOGS: true
         - task: capi-bara-tests
@@ -1347,7 +1347,7 @@ jobs:
           input_mapping:
             integration-config: updated-integration-configs
           params:
-            NODES: 4
+            NODES: 6
             FLAKE_ATTEMPTS: 2
             CONFIG_FILE_PATH: "elsa-ha/baras_integration_config.json"
         - task: sync-integration-tests
@@ -1371,6 +1371,7 @@ jobs:
         BBL_STATE_DIR: "elsa-ha/bbl-state"
     - task: run-blobstore-benchmarks
       file: capi-ci/ci/benchmarks/run-blobstore-benchmarks.yml
+      privileged: true
       params:
         BBL_STATE_DIR: "elsa-ha/bbl-state"
 #
