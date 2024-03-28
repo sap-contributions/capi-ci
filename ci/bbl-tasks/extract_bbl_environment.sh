@@ -26,7 +26,11 @@ echo "${ENV_NAME}" > "${output_name_file}"
 
 echo "Creating bbl vars file..."
 
-pushd "${capi_ci_private}/${ENV_NAME}" > /dev/null
+if [ -n "${BBL_STATE_DIR:-}" ]; then
+  pushd "${capi_ci_private}/${BBL_STATE_DIR}" > /dev/null
+else
+  pushd "${capi_ci_private}/${ENV_NAME}" > /dev/null
+fi
 
 eval "$(bbl print-env)"
 jumpbox_address="$(bbl print-env | grep BOSH_ALL_PROXY | cut -d'@' -f2 | cut -d'?' -f1)"

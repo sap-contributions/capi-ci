@@ -19,3 +19,4 @@ run:
 params:
   ENV_NAME: ""
   DEPLOYMENT_NAME: cf
+  BBL_STATE_DIR: ""
