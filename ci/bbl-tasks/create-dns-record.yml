@@ -4,8 +4,7 @@ platform: linux
 image_resource:
   type: registry-image
   source:
-    repository: cloudfoundry/capi
-    tag: bbl
+    cloudfoundry/bbl-deployment
 
 inputs:
   - name: capi-ci
