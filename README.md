@@ -16,51 +16,34 @@ See [pipeline.yml](https://github.com/cloudfoundry/capi-ci/blob/main/ci/pipeline
     |          · Long-lived                                                |
     |          · HA / Multi-AZ                                             |
     |          · Windows cell                                              |
-    |          · "Real" router certs (via DigiCert)                        |
     |          · Encrypted database                                        |
     |          · Clustered database                                        |
     |          · Runtime credhub (assisted mode)                           |
-    |          · Telemetry                                                 |
     |          · Database: MySQL                                           |
-    |          · Blobstore: S3                                             |
+    |          · Platform: GCP                                             |
+    |          · Blobstore: GCP blobstore                                  |
     |                                                                      |
-    |  Mulan: used for testing Postgres and non-standard configuration     |
-    |          · Long-lived                                                |
-    |          · Runtime credhub (non-assisted mode)                       |
-    |          · Database: Postgres                                        |
-    |          · Blobstore: WebDAV                                         |
-    |                                                                      |
-    |  Ripley: used for testing NFS blobstore                              |
-    |          · Long-lived                                                |
-    |          · Database: MySQL                                           |
-    |          · Blobstore: NFS                                            |
-    |                                                                      |
-    |  Leia: used for testing Azure blobstore                              |
-    |          · Long-lived                                                |
-    |          · Database: MySQL                                           |
-    |          · Blobstore: Azure                                          |
-    |                                                                      |
-    |  Rey: used for testing GCP blobstore                                 |
-    |          · Long-lived                                                |
-    |          · Database: MySQL                                           |
-    |          · Blobstore: GCP                                            |
     |                                                                      |
     |  Kiki: used for testing that db migrations are backwards compatible  |
     |          · Short-lived                                               |
     |          · Database: Postgres                                        |
+    |          · Platform: GCP                                             |
     |          · Blobstore: WebDAV                                         |
     |                                                                      |
-    |  Xena: used for testing BBR on MySQL                                 |
+    |  Asha: used for testing CATS and CAPI-BARA tests on MySQL            |
     |          · Short-lived                                               |
     |          · Database: MySQL                                           |
+    |          · Platform: GCP                                             |
     |          · Blobstore: WebDAV                                         |
     |                                                                      |
-    |  Gabrielle: used for testing BBR on Postgres                         |
+    |  Scar: used for testing CATS and CAPI-BARA tests on PostgreSQL       |
     |          · Short-lived                                               |
-    |          · Database: Postgres                                        |
+    |          · Database: PostgreSQL                                      |
+    |          · Platform: GCP                                             |
     |          · Blobstore: WebDAV                                         |
     |                                                                      |
     |                                                                      |    
+    |  All other envrionments are not used and might be cleaned up!        |
     |   ___________________________________________________________________|___
     |  /                                                                      /
     \_/______________________________________________________________________/
