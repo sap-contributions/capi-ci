@@ -22,6 +22,9 @@ groups:
   - asha-mysql-deploy-cf
   - asha-mysql-tests
   - asha-mysql-destroy-cf
+  - scar-psql-deploy-cf
+  - scar-psql-tests
+  - scar-psql-destroy-cf
   - elsa-ha-deploy-cf
   - elsa-ha-tests
 #  - mulan-postgres
@@ -52,10 +55,12 @@ groups:
   jobs:
     - bbl-up-elsa-ha
     - bbl-up-asha-mysql
+    - bbl-up-scar-psql
 
 - name: bbl-destroy
   jobs:
     - manual-bbl-destroy-asha-mysql
+    - manual-bbl-destroy-scar-psql
     - emergency-bbl-destroy-elsa-ha
 
 
@@ -96,12 +101,12 @@ resources:
     stop: 23:30
     days: [Sunday]
 
-#- name: nightly
-#  type: time
-#  source:
-#    location: America/Los_Angeles
-#    start: 23:00
-#    stop: 23:30
+- name: nightly
+  type: time
+  source:
+    location: America/Los_Angeles
+    start: 22:30
+    stop: 23:00
 
 
 - name: capi-ci
@@ -422,6 +427,24 @@ resources:
     password: ((ari-wg-gitbot-token))
 
 - name: asha-mysql-integration-configs
+  type: git
+  source:
+    branch: main
+    uri: https://github.com/cloudfoundry/capi-ci-private.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
+
+# Scar resources
+- name: scar-psql-bbl-state
+  type: git
+  source:
+    branch: main
+    uri: https://github.com/cloudfoundry/capi-ci-private.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
+- name: scar-psql-integration-configs
   type: git
   source:
     branch: main
@@ -827,8 +850,8 @@ jobs:
         - get: capi-ci
         - get: capi-ci-private
         - get: cf-deployment
-    #    - get: nightly
-    #      trigger: true
+        - get: nightly
+          trigger: true
     - task: bbl-up-elsa-ha
       file: cf-deployment-concourse-tasks/bbl-up/task.yml
       input_mapping:
@@ -851,18 +874,18 @@ jobs:
         params:
           repository: updated-bbl-state
           rebase: true
-#    - task: create-dns-record
-#      attempts: 3
-#      file: capi-ci/ci/bbl-tasks/create-dns-record.yml
-#      input_mapping:
-#        bbl-state: updated-bbl-state
-#      params:
-#        BBL_CONFIG_DIR: "elsa-ha/bbl-config"
-#        BBL_STATE_DIR: "elsa-ha/bbl-state"
-#        DNS_DOMAIN: *elsa-ha-domain
-#        GCP_DNS_SERVICE_ACCOUNT_KEY: ((capi-bbl-dns-service-account))
-#        GCP_PROJECT_ID: app-runtime-interfaces-wg
-#        SHARED_DNS_ZONE_NAME: "app-runtime-interfaces"
+    - task: create-dns-record
+      attempts: 3
+      file: capi-ci/ci/bbl-tasks/create-dns-record.yml
+      input_mapping:
+        bbl-state: updated-bbl-state
+      params:
+        BBL_CONFIG_DIR: "elsa-ha/bbl-config"
+        BBL_STATE_DIR: "elsa-ha/bbl-state"
+        DNS_DOMAIN: *elsa-ha-domain
+        GCP_DNS_SERVICE_ACCOUNT_KEY: ((capi-bbl-dns-service-account))
+        GCP_PROJECT_ID: app-runtime-interfaces-wg
+        SHARED_DNS_ZONE_NAME: "app-runtime-interfaces"
     - task: run-bosh-cleanup
       file: capi-ci/ci/bbl-tasks/run-bosh-cleanup.yml
       input_mapping:
@@ -882,8 +905,8 @@ jobs:
     - get: capi-ci
     - get: capi-ci-private
     - get: cf-deployment
-#    - get: nightly
-#      trigger: true
+    - get: nightly
+      trigger: true
   - task: bbl-up-asha-mysql
     file: cf-deployment-concourse-tasks/bbl-up/task.yml
     input_mapping:
@@ -905,17 +928,17 @@ jobs:
       params:
         repository: updated-bbl-state
         rebase: true
-#  - task: create-dns-record
-#    attempts: 3
-#    file: capi-ci/ci/bbl-tasks/create-dns-record.yml
-#    input_mapping:
-#      bbl-state: updated-bbl-state
-#    params:
-#      BBL_STATE_DIR: "asha-mysql/bbl-state"
-#      DNS_DOMAIN: *asha-mysql-domain
-#      GCP_DNS_SERVICE_ACCOUNT_KEY: ((capi-bbl-dns-service-account))
-#      GCP_PROJECT_ID: app-runtime-interfaces-wg
-#      SHARED_DNS_ZONE_NAME: "app-runtime-interfaces"
+  - task: create-dns-record
+    attempts: 3
+    file: capi-ci/ci/bbl-tasks/create-dns-record.yml
+    input_mapping:
+      bbl-state: updated-bbl-state
+    params:
+      BBL_STATE_DIR: "asha-mysql/bbl-state"
+      DNS_DOMAIN: *asha-mysql-domain
+      GCP_DNS_SERVICE_ACCOUNT_KEY: ((capi-bbl-dns-service-account))
+      GCP_PROJECT_ID: app-runtime-interfaces-wg
+      SHARED_DNS_ZONE_NAME: "app-runtime-interfaces"
   - task: run-bosh-cleanup
     file: capi-ci/ci/bbl-tasks/run-bosh-cleanup.yml
     input_mapping:
@@ -946,6 +969,83 @@ jobs:
       params:
         repository: updated-bbl-state
         rebase: true
+
+- name: bbl-up-scar-psql
+  serial: true
+  serial_groups: [scar-psql]
+  plan:
+    - in_parallel:
+        - get: cf-deployment-concourse-tasks
+          resource: cf-deployment-concourse-tasks
+        - get: scar-psql-bbl-state
+        - get: capi-ci
+        - get: capi-ci-private
+        - get: cf-deployment
+        - get: nightly
+          trigger: true
+    - task: bbl-up-scar-psql
+      file: cf-deployment-concourse-tasks/bbl-up/task.yml
+      input_mapping:
+        bbl-state: capi-ci-private
+        bbl-config: capi-ci-private
+      params: &update-bosh-xena-mysql-params
+        BBL_CONFIG_DIR: "scar-psql/bbl-config"
+        BBL_STATE_DIR: "scar-psql/bbl-state"
+        BBL_IAAS: "gcp"
+        BBL_ENV_NAME: "scar-psql"
+        BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-scar-service-account))
+        BBL_GCP_PROJECT_ID: app-runtime-interfaces-wg
+        BBL_GCP_REGION: europe-west3
+        BBL_LB_CERT: ((scar_lb.certificate))
+        BBL_LB_KEY: ((scar_lb.private_key))
+        LB_DOMAIN: &scar-psql-domain "cf.scar.app-runtime-interfaces.ci.cloudfoundry.org"
+      ensure:
+        put: scar-psql-bbl-state
+        params:
+          repository: updated-bbl-state
+          rebase: true
+    - task: create-dns-record
+      attempts: 3
+      file: capi-ci/ci/bbl-tasks/create-dns-record.yml
+      input_mapping:
+        bbl-state: updated-bbl-state
+      params:
+        BBL_STATE_DIR: "scar-psql/bbl-state"
+        DNS_DOMAIN: *scar-psql-domain
+        GCP_DNS_SERVICE_ACCOUNT_KEY: ((capi-bbl-dns-service-account))
+        GCP_PROJECT_ID: app-runtime-interfaces-wg
+        SHARED_DNS_ZONE_NAME: "app-runtime-interfaces"
+    - task: run-bosh-cleanup
+      file: capi-ci/ci/bbl-tasks/run-bosh-cleanup.yml
+      input_mapping:
+        bbl-state: updated-bbl-state
+      params:
+        BBL_STATE_DIR: "scar-psql/bbl-state"
+
+- name: manual-bbl-destroy-scar-psql
+  serial: true
+  serial_groups: [scar-psql]
+  plan:
+    - in_parallel:
+        - get: cf-deployment-concourse-tasks
+          resource: cf-deployment-concourse-tasks
+        - get: scar-psql-bbl-state
+        - get: capi-ci
+        - get: capi-ci-private
+    - task: manual-bbl-destroy-scar-psql
+      file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
+      input_mapping:
+        bbl-state: capi-ci-private
+        bbl-config: capi-ci-private
+      params:
+        BBL_STATE_DIR: "scar-psql/bbl-state"
+        BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-scar-service-account))
+      ensure:
+        put: scar-psql-bbl-state
+        params:
+          repository: updated-bbl-state
+          rebase: true
+
 
 - name: emergency-bbl-destroy-elsa-ha
   serial: true
@@ -998,6 +1098,7 @@ jobs:
     - get: capi-release-tarball
       passed:
         - asha-mysql-destroy-cf
+        - scar-psql-destroy-cf
         - elsa-ha-tests
       trigger: true
   - put: capi-release-ci-passed
@@ -1188,6 +1289,192 @@ jobs:
         bbl-state: asha-mysql-bbl-state
       params:
         BBL_STATE_DIR: "asha-mysql/bbl-state"
+        IGNORE_ERRORS: true
+
+
+- name: scar-psql-deploy-cf
+  serial: true
+  serial_groups: [scar-psql]
+  plan:
+    - in_parallel:
+        - get: cloud_controller_ng
+          passed: [create-capi-release]
+        - get: cf-deployment
+          resource: cf-deployment
+        - get: capi-ci
+        - get: capi-ci-private
+        - get: cf-deployment-concourse-tasks
+          resource: cf-deployment-concourse-tasks
+        - get: capi-release
+          resource: capi-release-develop
+          passed: [create-capi-release]
+        - get: capi-release-tarball
+          passed: [create-capi-release]
+          trigger: true
+        - get: scar-psql-bbl-state
+    - task: stemcell-upload
+      file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
+      input_mapping:
+        bbl-state: capi-ci-private
+      params:
+        BBL_STATE_DIR: "scar-psql/bbl-state"
+    - task: upload-capi-release-tarball
+      file: capi-ci/ci/bosh/upload-release.yml
+      input_mapping:
+        bbl-state: scar-psql-bbl-state
+        release-tarball: capi-release-tarball
+      params:
+        BBL_STATE_DIR: "scar-psql/bbl-state"
+    - task: collect-ops-files
+      file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+      input_mapping:
+        base-ops-files: cf-deployment
+        new-ops-files: capi-ci
+      params:
+        NEW_OPS_FILES: |
+          cf-deployment-operations/use-latest-capi.yml
+          cf-deployment-operations/scale-up-cloud-controller.yml
+          cf-deployment-operations/rotate-cc-database-key/add-database-encryption-keys.yml
+          cf-deployment-operations/scale-up-cells.yml
+          cf-deployment-operations/performance/scale-generic-worker-processes.yml
+          cf-deployment-operations/use-latest-capi.yml
+          cf-deployment-operations/temporary/disable-uaa-get-requests.yml
+          cf-deployment-operations/seed-credhub-asg.yml
+          cf-deployment-operations/seed-uaa-asg.yml
+    - task: deploy
+      file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+      input_mapping:
+        bbl-state: capi-ci-private
+        ops-files: collected-ops-files
+        vars-files: capi-ci-private
+      params:
+        BBL_STATE_DIR: "scar-psql/bbl-state"
+        SYSTEM_DOMAIN: *scar-psql-domain
+        OPS_FILES: |
+          base-ops-files/operations/use-compiled-releases.yml
+          base-ops-files/operations/use-postgres.yml
+          use-latest-capi.yml
+          scale-up-cloud-controller.yml
+          add-database-encryption-keys.yml
+          scale-up-cells.yml
+          scale-generic-worker-processes.yml
+          disable-uaa-get-requests.yml
+          seed-credhub-asg.yml
+          base-ops-files/operations/test/speed-up-dynamic-asgs.yml
+          seed-uaa-asg.yml
+
+- name: scar-psql-tests
+  serial: true
+  serial_groups: [scar-psql]
+  plan:
+    - in_parallel:
+        - get: capi-ci
+        - get: capi-ci-private
+        - get: cf-deployment-concourse-tasks
+          resource: cf-deployment-concourse-tasks
+        - get: capi-release-tarball
+          passed: [scar-psql-deploy-cf]
+          trigger: true
+        - get: scar-psql-bbl-state
+        - get: scar-psql-integration-configs
+        - get: cf-acceptance-tests
+        - get: sync-integration-tests
+        - get: capi-bara-tests
+        - get: cf-cli
+    - task: updated-integration-configs
+      file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+      input_mapping:
+        bbl-state: scar-psql-bbl-state
+        integration-configs: scar-psql-integration-configs
+      params:
+        CATS_INTEGRATION_CONFIG_FILE: "scar-psql/cats_integration_config.json"
+        BBL_STATE_DIR: "scar-psql/bbl-state"
+        SYSTEM_DOMAIN: *scar-psql-domain
+      ensure:
+        put: scar-psql-integration-configs
+        params:
+          repository: updated-integration-configs
+          rebase: true
+    - task: updated-baras-integration-configs
+      file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+      input_mapping:
+        bbl-state: capi-ci-private
+        integration-configs: updated-integration-configs
+      params:
+        CATS_INTEGRATION_CONFIG_FILE: "scar-psql/baras_integration_config.json"
+        BBL_STATE_DIR: "scar-psql/bbl-state"
+        SYSTEM_DOMAIN: *scar-psql-domain
+      ensure:
+        put: scar-psql-integration-configs
+        params:
+          repository: updated-integration-configs
+          rebase: true
+    - task: enable-feature-flags
+      file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
+      input_mapping:
+        bbl-state: scar-psql-bbl-state
+      params:
+        SYSTEM_DOMAIN: *scar-psql-domain
+        BBL_STATE_DIR: "scar-psql/bbl-state"
+        ENABLED_FEATURE_FLAGS: "diego_docker"
+    - task: cleanup-acceptance-test-leftovers
+      file: capi-ci/ci/acceptance-test-utils/cats_cleanup.yml
+      params:
+        CF_API_TARGET: &scar-psql-api-url https://api.cf.scar.app-runtime-interfaces.ci.cloudfoundry.org
+        BBL_STATE_DIR: "scar-psql/bbl-state"
+    - in_parallel:
+        - task: acceptance-tests
+          file: cf-deployment-concourse-tasks/run-cats/task.yml
+          input_mapping:
+            integration-config: updated-integration-configs
+          params:
+            NODES: 10
+            CONFIG_FILE_PATH: "scar-psql/cats_integration_config.json"
+            CAPTURE_LOGS: true
+        - task: capi-bara-tests
+          file: capi-ci/ci/baras/run-baras.yml
+          input_mapping:
+            integration-config: updated-integration-configs
+          params:
+            NODES: 6
+            FLAKE_ATTEMPTS: 2
+            CONFIG_FILE_PATH: "scar-psql/baras_integration_config.json"
+        - task: sync-integration-tests
+          file: sync-integration-tests/concourse/task_with_credhub.yml
+          input_mapping:
+            environment: capi-ci-private
+          params:
+            BOSH_DEPLOYMENT_NAME: cf
+            BOSH_API_INSTANCE: api/0
+            CF_API_TARGET: *scar-psql-api-url
+            CF_SKIP_SSL_VALIDATION: true
+            CF_APPS_DOMAIN: *scar-psql-domain
+            BBL_STATE_DIR: "scar-psql/bbl-state"
+            USE_CREDHUB: true
+            RUN_REVISIONS_TESTS: true
+            FLAKE_ATTEMPTS: 2
+    - task: extract-bbl-environment
+      file: capi-ci/ci/bbl-tasks/extract_bbl_environment.yml
+      params:
+        ENV_NAME: scar-psql
+
+- name: scar-psql-destroy-cf
+  serial: true
+  serial_groups: [scar-psql]
+  plan:
+    - in_parallel:
+        - get: cf-deployment-concourse-tasks
+          resource: cf-deployment-concourse-tasks
+        - get: capi-release-tarball
+          passed: [scar-psql-tests]
+          trigger: true
+        - get: scar-psql-bbl-state
+    - task: delete-deployment
+      file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+      input_mapping:
+        bbl-state: scar-psql-bbl-state
+      params:
+        BBL_STATE_DIR: "scar-psql/bbl-state"
         IGNORE_ERRORS: true
 
 - name: elsa-ha-deploy-cf
