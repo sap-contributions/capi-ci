@@ -181,7 +181,7 @@ resources:
   source:
     driver: gcs
     json_key: ((capi-release-blobs-uploader_key))
-    initial_version: 1.175.0
+    initial_version: 1.176.0
     bucket: capi-release-versions-app-runtime-interfaces
     key: current-capi-release-version
 
@@ -325,7 +325,7 @@ resources:
 - name: cf-deployment-concourse-tasks
   type: git
   source:
-    branch: main
+    branch: download-cf-cli-for-cats
     uri: https://github.com/cloudfoundry/cf-deployment-concourse-tasks.git
     username: ((ari-wg-gitbot-username))
     password: ((ari-wg-gitbot-token))
@@ -1126,6 +1126,13 @@ jobs:
           passed: [create-capi-release]
           trigger: true
         - get: asha-mysql-bbl-state
+    - task: delete-deployment
+      file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+      input_mapping:
+        bbl-state: asha-mysql-bbl-state
+      params:
+        BBL_STATE_DIR: "asha-mysql/bbl-state"
+        IGNORE_ERRORS: true
     - task: stemcell-upload
       file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
       input_mapping:
@@ -1312,6 +1319,13 @@ jobs:
           passed: [create-capi-release]
           trigger: true
         - get: scar-psql-bbl-state
+    - task: delete-deployment
+      file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+      input_mapping:
+        bbl-state: scar-psql-bbl-state
+      params:
+        BBL_STATE_DIR: "scar-psql/bbl-state"
+        IGNORE_ERRORS: true
     - task: stemcell-upload
       file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
       input_mapping:
@@ -1427,6 +1441,7 @@ jobs:
           file: cf-deployment-concourse-tasks/run-cats/task.yml
           input_mapping:
             integration-config: updated-integration-configs
+            cf-cli: cf-cli
           params:
             NODES: 10
             CONFIG_FILE_PATH: "scar-psql/cats_integration_config.json"
