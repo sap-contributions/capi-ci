@@ -4,6 +4,7 @@ set -eu
 
 FINAL_RELEASE_DIR=capi-final-releases/
 PREVIOUS_RELEASE_TAG=$(cat github-published-release/tag)
+NEXT_VERSION_DIR=next-version/
 pushd capi-release
   SHA_CAPI=$(git rev-parse HEAD )
   echo $SHA_CAPI > ../$FINAL_RELEASE_DIR/commitish
@@ -19,7 +20,7 @@ pushd capi-release
   popd
 popd
 
-VERSION_CAPI=$(cat $FINAL_RELEASE_DIR/version)
+VERSION_CAPI=$(cat $NEXT_VERSION_DIR/version)
 
 echo "CAPI ${VERSION_CAPI}" > $FINAL_RELEASE_DIR/name
 echo "${VERSION_CAPI}" > $FINAL_RELEASE_DIR/version

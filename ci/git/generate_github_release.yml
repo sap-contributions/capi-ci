@@ -4,14 +4,14 @@ platform: linux
 image_resource:
   type: registry-image
   source:
-    repository: cloudfoundry/capi
-    tag: runtime-ci
+    repository: cloudfoundry/cf-deployment-concourse-tasks
 
 inputs:
   - name: capi-ci
   - name: capi-release
   - name: capi-final-releases
   - name: github-published-release
+  - name: next-version
 
 outputs:
   - name: generated-release
