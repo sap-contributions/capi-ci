@@ -325,7 +325,7 @@ resources:
 - name: cf-deployment-concourse-tasks
   type: git
   source:
-    branch: download-cf-cli-for-cats
+    branch: main
     uri: https://github.com/cloudfoundry/cf-deployment-concourse-tasks.git
     username: ((ari-wg-gitbot-username))
     password: ((ari-wg-gitbot-token))
@@ -706,6 +706,8 @@ jobs:
     - get: capi-final-releases
       passed: [ship-it]
       trigger: true
+    - get: next-version
+      passed: [ ship-it ]
     - get: github-published-release
       params:
         globs: []
@@ -734,7 +736,7 @@ jobs:
   - task: push-rc-docs-v3
     file: capi-ci/ci/docs/push_rc_docs_v3.yml
     params:
-      GITHUB_PUSH_KEY: ((ari-wg-gitbot-token))
+      GITHUB_PUSH_KEY: ((ari-wg-gitbot-ssh.private_key))
 #    on_failure:
 #      put: slack-alert
 #      params:
@@ -833,7 +835,7 @@ jobs:
     file: capi-ci/ci/docs/push_docs_v3.yml
     privileged: true
     params:
-      GITHUB_PUSH_KEY: ((private_key))
+      GITHUB_PUSH_KEY: ((ari-wg-gitbot-ssh.private_key))
 #    on_failure:
 #      put: slack-alert
 #      params:
