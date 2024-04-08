@@ -58,8 +58,13 @@ start_background_ssh_tunnel() {
 kill_background_ssh_tunnel() {
   echo "${green}Killing SSH tunnel...${reset}"
 
-  ssh_pid="$(lsof -i ":${tunnel_port}" | tail -n1 | awk '{ printf $2 }')"
-  kill "${ssh_pid}"
+  ssh_pid=$(pgrep -f "ssh -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null' -D ${tunnel_port}")
+
+  if [ -n "${ssh_pid}" ]; then
+    kill "${ssh_pid}"
+  else
+    echo "No process is using port ${tunnel_port}"
+  fi
 }
 
 cache_ip_for_hostname() {
