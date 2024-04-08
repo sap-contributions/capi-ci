@@ -12,8 +12,7 @@ outputs:
 image_resource:
   type: registry-image
   source:
-    repository: cloudfoundry/capi
-    tag: runtime-ci
+    repository: cloudfoundry/cf-deployment-concourse-tasks
 
 params:
   GO_VERSION:
