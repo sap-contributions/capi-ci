@@ -36,6 +36,8 @@ new_redis_version=$(cat "$redis_path/version") || { echo "Error: cat command for
 new_redis_url=$(cat "$redis_path/url") || { echo "Error: cat command for url failed."; exit 1; }
 echo "New Redis version is '${new_redis_version}'"
 
+cp -r "$PWD"/capi-release/. "$PWD"/updated-capi-release
+
 if [[ "$current_redis_version" == "$new_redis_version" ]]; then
   echo "The current Redis version is the same as the new version. Exiting..."
   exit 0
@@ -54,8 +56,8 @@ pushd capi-release
 
     git --no-pager diff packages .final_builds config
 
-    git config user.name "CAPI CI"
-    git config user.email "cf-capi-eng+ci@pivotal.io"
+    git config user.name "ari-wg-gitbot"
+    git config user.email "app-runtime-interfaces@cloudfoundry.org"
 
     git add -A packages .final_builds config
     git commit -n --allow-empty -m "Bump Redis to $new_redis_version" -m "Changes: $new_redis_url"  || { echo "Error: git commit failed."; exit 1; }
