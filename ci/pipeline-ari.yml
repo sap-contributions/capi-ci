@@ -767,8 +767,8 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ((cloudgate_docs_s3_secret_key))
       AWS_ROLE_ARN: ((cloudgate_docs_s3_role_arn))
       CF_VERSIONS_FILE_PATH: api-docs/data/cf-deployment-api-versions.json
-      GIT_COMMIT_USERNAME: "CAPI CI"
-      GIT_COMMIT_EMAIL: "cf-capi-eng+ci@pivotal.io"
+      GIT_COMMIT_USERNAME: "ari-wg-gitbot"
+      GIT_COMMIT_EMAIL: "app-runtime-interfaces@cloudfoundry.org"
     input_mapping:
       capi-release: capi-release-main
       cf-deployment: cf-deployment-main

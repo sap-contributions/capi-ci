@@ -10,8 +10,8 @@ pushd capi-dockerfiles > /dev/null
   done
 
    if [[ -n $(git status --porcelain) ]]; then
-    git config user.name "CAPI CI"
-    git config user.email "cf-capi-eng+ci@pivotal.io"
+    git config user.name "ari-wg-gitbot"
+    git config user.email "app-runtime-interfaces@cloudfoundry.org"
     git add .
     git commit --allow-empty \
     -m "Update bosh version in Dockerfiles"

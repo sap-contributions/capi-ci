@@ -43,8 +43,8 @@ pushd capi-release
   then
    echo "There are no changes to commit."
   else
-    git config user.name "CAPI CI"
-    git config user.email "cf-capi-eng+ci@pivotal.io"
+    git config user.name "ari-wg-gitbot"
+    git config user.email "app-runtime-interfaces@cloudfoundry.org"
 
     git add src/cloud_controller_ng
     git add src/code.cloudfoundry.org

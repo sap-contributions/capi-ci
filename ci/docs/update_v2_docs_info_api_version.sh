@@ -2,8 +2,8 @@
 set -e
 
 function setup_git_user() {
-  git config user.name 'CAPI CI'
-  git config user.email 'cf-capi-eng+ci@pivotal.io'
+  git config user.name 'ari-wg-gitbot'
+  git config user.email 'app-runtime-interfaces@cloudfoundry.org'
 }
 
 function bump_v2_docs() {

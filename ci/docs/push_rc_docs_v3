@@ -15,8 +15,8 @@ function setup_v3_ssh() {
 }
 
 function setup_v3() {
-  git config user.name 'CAPI CI'
-  git config user.email 'cf-capi-eng+ci@pivotal.io'
+  git config user.name 'ari-wg-gitbot'
+  git config user.email 'app-runtime-interfaces@cloudfoundry.org'
 }
 
 function build_v3_docs() {

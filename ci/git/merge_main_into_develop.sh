@@ -3,8 +3,8 @@ set -e -u
 
 pushd capi-release
   echo "----- Set git identity"
-  git config user.name "CAPI CI"
-  git config user.email "cf-capi-eng+ci@pivotal.io"
+  git config user.name "ari-wg-gitbot"
+  git config user.email "app-runtime-interfaces@cloudfoundry.org"
 
   echo "----- Adding main cloned release as remote"
   git remote add local-capi-release-main ../capi-release-main

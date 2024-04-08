@@ -18,8 +18,8 @@ popd
 
 pushd cloud_controller_ng
   git add ${ruby_generated_files_path}
-  git config user.name 'CAPI CI'
-  git config user.email cf-capi-eng+ci@pivotal.io
+  git config user.name 'ari-wg-gitbot'
+  git config user.email app-runtime-interfaces@cloudfoundry.org
   git commit -m "Bump bbs protos"
 popd
 

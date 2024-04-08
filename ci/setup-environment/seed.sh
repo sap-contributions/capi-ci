@@ -75,8 +75,8 @@ EOF
 
 function commit_capi_ci_private() {
   if [[ -n $(git status --porcelain) ]]; then
-    git config user.name "CI Bot"
-    git config user.email "cf-capi-eng@pivotal.io"
+    git config user.name "ari-wg-gitbot"
+    git config user.email "app-runtime-interfaces@cloudfoundry.org"
 
     git add "${updated_capi_ci_private}/${ENVIRONMENT}"
     git commit -m "Initial commit for '${ENVIRONMENT}'"

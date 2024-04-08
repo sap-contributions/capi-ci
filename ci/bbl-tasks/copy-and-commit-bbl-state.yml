@@ -14,8 +14,8 @@ inputs:
 
 params:
   REPO_SUBDIRECTORY:
-  GIT_COMMIT_EMAIL: capi-bot@pivotal.io
-  GIT_COMMIT_USERNAME: "CAPI CI Bot"
+  GIT_COMMIT_EMAIL: app-runtime-interfaces@cloudfoundry.org
+  GIT_COMMIT_USERNAME: "ari-wg-gitbot"
 
 outputs:
   - name: updated-bbl-state-repo

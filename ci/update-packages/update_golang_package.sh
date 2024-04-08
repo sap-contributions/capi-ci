@@ -14,8 +14,8 @@ bosh vendor-package golang-${GO_VERSION}-linux ../golang-release
 
 git --no-pager diff packages .final_builds
 
-git config user.name "CAPI CI"
-git config user.email "cf-capi-eng+ci@pivotal.io"
+git config user.name "ari-wg-gitbot"
+git config user.email "app-runtime-interfaces@cloudfoundry.org"
 
 git add -A packages .final_builds
 git commit -n --allow-empty -m "Bump Golang to $new_go_version"
