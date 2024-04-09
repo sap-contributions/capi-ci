@@ -19,12 +19,15 @@ groups:
   - capi-release-template-tests
   - create-capi-release
   - bump-capi-release
+  - asha-mysql-acquire-pool
   - asha-mysql-deploy-cf
   - asha-mysql-tests
   - asha-mysql-destroy-cf
+  - scar-psql-acquire-pool
   - scar-psql-deploy-cf
   - scar-psql-tests
   - scar-psql-destroy-cf
+  - elsa-ha-acquire-pool
   - elsa-ha-deploy-cf
   - elsa-ha-tests
 #  - mulan-postgres
@@ -53,8 +56,11 @@ groups:
 
 - name: bbl-up
   jobs:
+    - elsa-ha-acquire-bbl-up-pool
     - bbl-up-elsa-ha
+    - asha-mysql-acquire-bbl-up-pool
     - bbl-up-asha-mysql
+    - scar-psql-acquire-bbl-up-pool
     - bbl-up-scar-psql
 
 - name: bbl-destroy
@@ -62,6 +68,9 @@ groups:
     - manual-bbl-destroy-asha-mysql
     - manual-bbl-destroy-scar-psql
     - emergency-bbl-destroy-elsa-ha
+    - elsa-ha-release-pool-manual
+    - scar-psql-release-pool-manual
+    - asha-mysql-release-pool-manual
 - name: bump-dependencies
   jobs:
     - autobump-golang-package
@@ -404,6 +413,17 @@ resources:
     username: ((ari-wg-gitbot-username))
     password: ((ari-wg-gitbot-token))
 
+- name: elsa-ha-pool
+  type: pool
+  icon: pool
+  source:
+    uri: https://github.com/cloudfoundry/capi-ci-private.git
+    branch: ari-bbl-env-pool
+    pool: elsa-ha
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
+
 ## Kiki resources
 #- name: kiki-bbl-state
 #  type: git
@@ -438,6 +458,15 @@ resources:
     username: ((ari-wg-gitbot-username))
     password: ((ari-wg-gitbot-token))
 
+- name: asha-mysql-pool
+  type: pool
+  icon: pool
+  source:
+    uri: https://github.com/cloudfoundry/capi-ci-private.git
+    branch: ari-bbl-env-pool
+    pool: asha-mysql
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
 
 # Scar resources
 - name: scar-psql-bbl-state
@@ -453,6 +482,16 @@ resources:
   source:
     branch: main
     uri: https://github.com/cloudfoundry/capi-ci-private.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
+- name: scar-psql-pool
+  type: pool
+  icon: pool
+  source:
+    uri: https://github.com/cloudfoundry/capi-ci-private.git
+    branch: ari-bbl-env-pool
+    pool: scar-psql
     username: ((ari-wg-gitbot-username))
     password: ((ari-wg-gitbot-token))
 
@@ -844,7 +883,23 @@ jobs:
 #      put: slack-alert
 #      params:
 #        text: '[publish-docs-v3] OH NO! Failed to update documentation https://capi.ci.cf-app.com/?groups=migrations-dependencies-docs'
+- name: elsa-ha-acquire-bbl-up-pool
+  serial: true
+  plan:
+    - in_parallel:
+        - get: nightly
+          trigger: true
+        - put: elsa-ha-pool
+          params: {acquire: true}
+      timeout: 4h
 
+- name: elsa-ha-release-pool-manual
+  plan:
+    - get: elsa-ha-pool
+  ensure:
+    try:
+      put: elsa-ha-pool
+      params: {release: elsa-ha-pool}
 - name: bbl-up-elsa-ha
   serial: true
   serial_groups: [elsa-ha]
@@ -856,7 +911,8 @@ jobs:
         - get: capi-ci
         - get: capi-ci-private
         - get: cf-deployment
-        - get: nightly
+        - get: elsa-ha-pool
+          passed: [elsa-ha-acquire-bbl-up-pool]
           trigger: true
     - task: bbl-up-elsa-ha
       file: cf-deployment-concourse-tasks/bbl-up/task.yml
@@ -898,7 +954,26 @@ jobs:
         bbl-state: updated-bbl-state
       params:
         BBL_STATE_DIR: "elsa-ha/bbl-state"
+    - put: elsa-ha-pool
+      params: { release: elsa-ha-pool }
 
+- name: asha-mysql-acquire-bbl-up-pool
+  serial: true
+  plan:
+    - in_parallel:
+        - get: nightly
+          trigger: true
+        - put: asha-mysql-pool
+          params: {acquire: true}
+      timeout: 4h
+
+- name: asha-mysql-release-pool-manual
+  plan:
+    - get: asha-mysql-pool
+  ensure:
+    try:
+      put: asha-mysql-pool
+      params: {release: asha-mysql-pool}
 
 - name: bbl-up-asha-mysql
   serial: true
@@ -911,7 +986,8 @@ jobs:
     - get: capi-ci
     - get: capi-ci-private
     - get: cf-deployment
-    - get: nightly
+    - get: asha-mysql-pool
+      passed: [asha-mysql-acquire-bbl-up-pool]
       trigger: true
   - task: bbl-up-asha-mysql
     file: cf-deployment-concourse-tasks/bbl-up/task.yml
@@ -951,6 +1027,8 @@ jobs:
       bbl-state: updated-bbl-state
     params:
       BBL_STATE_DIR: "asha-mysql/bbl-state"
+  - put: asha-mysql-pool
+    params: { release: asha-mysql-pool }
 
 - name: manual-bbl-destroy-asha-mysql
   serial: true
@@ -976,6 +1054,24 @@ jobs:
         repository: updated-bbl-state
         rebase: true
 
+- name: scar-psql-acquire-bbl-up-pool
+  serial: true
+  plan:
+    - in_parallel:
+        - get: nightly
+          trigger: true
+        - put: scar-psql-pool
+          params: {acquire: true}
+      timeout: 4h
+
+- name: scar-psql-release-pool-manual
+  plan:
+    - get: scar-psql-pool
+  ensure:
+    try:
+      put: scar-psql-pool
+      params: {release: scar-psql-pool}
+
 - name: bbl-up-scar-psql
   serial: true
   serial_groups: [scar-psql]
@@ -987,7 +1083,8 @@ jobs:
         - get: capi-ci
         - get: capi-ci-private
         - get: cf-deployment
-        - get: nightly
+        - get: scar-psql-pool
+          passed: [ scar-psql-acquire-bbl-up-pool ]
           trigger: true
     - task: bbl-up-scar-psql
       file: cf-deployment-concourse-tasks/bbl-up/task.yml
@@ -1027,6 +1124,8 @@ jobs:
         bbl-state: updated-bbl-state
       params:
         BBL_STATE_DIR: "scar-psql/bbl-state"
+    - put: scar-psql-pool
+      params: { release: scar-psql-pool }
 
 - name: manual-bbl-destroy-scar-psql
   serial: true
@@ -1111,6 +1210,20 @@ jobs:
     params:
       repository: capi-release
 
+- name: asha-mysql-acquire-pool
+  serial: true
+  plan:
+    - in_parallel:
+        - get: capi-release-tarball
+          passed: [create-capi-release]
+        - get: cloud_controller_ng
+          passed: [ create-capi-release ]
+        - get: capi-release
+          resource: capi-release-develop
+          passed: [ create-capi-release ]
+        - put: asha-mysql-pool
+          params: {acquire: true}
+      timeout: 4h
 
 - name: asha-mysql-deploy-cf
   serial: true
@@ -1118,7 +1231,7 @@ jobs:
   plan:
     - in_parallel:
         - get: cloud_controller_ng
-          passed: [create-capi-release]
+          passed: [ asha-mysql-acquire-pool ]
         - get: cf-deployment
           resource: cf-deployment
         - get: capi-ci
@@ -1127,9 +1240,10 @@ jobs:
           resource: cf-deployment-concourse-tasks
         - get: capi-release
           resource: capi-release-develop
-          passed: [create-capi-release]
+          passed: [ asha-mysql-acquire-pool ]
         - get: capi-release-tarball
-          passed: [create-capi-release]
+        - get: asha-mysql-pool
+          passed: [ asha-mysql-acquire-pool ]
           trigger: true
         - get: asha-mysql-bbl-state
     - task: delete-deployment
@@ -1200,6 +1314,7 @@ jobs:
     - get: cf-deployment-concourse-tasks
       resource: cf-deployment-concourse-tasks
     - get: capi-release-tarball
+    - get: asha-mysql-pool
       passed: [asha-mysql-deploy-cf]
       trigger: true
     - get: asha-mysql-bbl-state
@@ -1268,6 +1383,7 @@ jobs:
           CONFIG_FILE_PATH: "asha-mysql/baras_integration_config.json"
       - task: sync-integration-tests
         file: sync-integration-tests/concourse/task_with_credhub.yml
+        attempts: 3
         input_mapping:
           environment: capi-ci-private
         params:
@@ -1293,6 +1409,7 @@ jobs:
         - get: cf-deployment-concourse-tasks
           resource: cf-deployment-concourse-tasks
         - get: capi-release-tarball
+        - get: asha-mysql-pool
           passed: [asha-mysql-tests]
           trigger: true
         - get: asha-mysql-bbl-state
@@ -1303,6 +1420,23 @@ jobs:
       params:
         BBL_STATE_DIR: "asha-mysql/bbl-state"
         IGNORE_ERRORS: true
+    - put: asha-mysql-pool
+      params: { release: asha-mysql-pool }
+
+- name: scar-psql-acquire-pool
+  serial: true
+  plan:
+    - in_parallel:
+        - get: capi-release-tarball
+          passed: [create-capi-release]
+        - get: cloud_controller_ng
+          passed: [ create-capi-release ]
+        - get: capi-release
+          resource: capi-release-develop
+          passed: [ create-capi-release ]
+        - put: scar-psql-pool
+          params: {acquire: true}
+      timeout: 4h
 
 
 - name: scar-psql-deploy-cf
@@ -1311,7 +1445,7 @@ jobs:
   plan:
     - in_parallel:
         - get: cloud_controller_ng
-          passed: [create-capi-release]
+          passed: [scar-psql-acquire-pool]
         - get: cf-deployment
           resource: cf-deployment
         - get: capi-ci
@@ -1320,9 +1454,10 @@ jobs:
           resource: cf-deployment-concourse-tasks
         - get: capi-release
           resource: capi-release-develop
-          passed: [create-capi-release]
+          passed: [scar-psql-acquire-pool]
         - get: capi-release-tarball
-          passed: [create-capi-release]
+        - get: scar-psql-pool
+          passed: [scar-psql-acquire-pool]
           trigger: true
         - get: scar-psql-bbl-state
     - task: delete-deployment
@@ -1393,6 +1528,7 @@ jobs:
         - get: cf-deployment-concourse-tasks
           resource: cf-deployment-concourse-tasks
         - get: capi-release-tarball
+        - get: scar-psql-pool
           passed: [scar-psql-deploy-cf]
           trigger: true
         - get: scar-psql-bbl-state
@@ -1462,6 +1598,7 @@ jobs:
             CONFIG_FILE_PATH: "scar-psql/baras_integration_config.json"
         - task: sync-integration-tests
           file: sync-integration-tests/concourse/task_with_credhub.yml
+          attempts: 3
           input_mapping:
             environment: capi-ci-private
           params:
@@ -1487,6 +1624,7 @@ jobs:
         - get: cf-deployment-concourse-tasks
           resource: cf-deployment-concourse-tasks
         - get: capi-release-tarball
+        - get: scar-psql-pool
           passed: [scar-psql-tests]
           trigger: true
         - get: scar-psql-bbl-state
@@ -1497,6 +1635,24 @@ jobs:
       params:
         BBL_STATE_DIR: "scar-psql/bbl-state"
         IGNORE_ERRORS: true
+    - put: scar-psql-pool
+      params: { release: scar-psql-pool }
+
+- name: elsa-ha-acquire-pool
+  serial: true
+  plan:
+    - in_parallel:
+        - get: capi-release-tarball
+          passed: [create-capi-release]
+        - get: cloud_controller_ng
+          passed: [ create-capi-release ]
+        - get: capi-release
+          resource: capi-release-develop
+          passed: [ create-capi-release ]
+        - put: elsa-ha-pool
+          params: {acquire: true}
+      timeout: 4h
+
 
 - name: elsa-ha-deploy-cf
   serial: true
@@ -1504,7 +1660,7 @@ jobs:
   plan:
     - in_parallel:
         - get: cloud_controller_ng
-          passed: [create-capi-release]
+          passed: [elsa-ha-acquire-pool]
         - get: cf-deployment
           resource: cf-deployment
         - get: capi-ci
@@ -1513,9 +1669,10 @@ jobs:
           resource: cf-deployment-concourse-tasks
         - get: capi-release
           resource: capi-release-develop
-          passed: [create-capi-release]
+          passed: [elsa-ha-acquire-pool]
         - get: capi-release-tarball
-          passed: [create-capi-release]
+        - get: elsa-ha-pool
+          passed: [elsa-ha-acquire-pool]
           trigger: true
         - get: elsa-ha-bbl-state
     - task: stemcell-upload
@@ -1592,7 +1749,8 @@ jobs:
         - get: cf-deployment-concourse-tasks
           resource: cf-deployment-concourse-tasks
         - get: capi-release-tarball
-          passed: [elsa-ha-deploy-cf]
+        - get: elsa-ha-pool
+          passed: [ elsa-ha-deploy-cf ]
           trigger: true
         - get: elsa-ha-bbl-state
         - get: elsa-ha-integration-configs
@@ -1660,6 +1818,7 @@ jobs:
             CONFIG_FILE_PATH: "elsa-ha/baras_integration_config.json"
         - task: sync-integration-tests
           file: sync-integration-tests/concourse/task_with_credhub.yml
+          attempts: 3
           input_mapping:
             environment: capi-ci-private
           params:
@@ -1682,6 +1841,8 @@ jobs:
       privileged: true
       params:
         BBL_STATE_DIR: "elsa-ha/bbl-state"
+    - put: elsa-ha-pool
+      params: { release: elsa-ha-pool }
 #
 #- name: thirtyfirstly-warning
 #  plan:
