@@ -82,7 +82,7 @@ This is where the majority of testing for capi-release components live.
 - Runs appropriate integration tests for each environment
 - Bumps the `ci-passed` branch of capi-release
 
-#### blobstore-fanout
+#### blobstore-fanout (missing currently)
 
 Additional blobstore tests that do no block the pipeline. These were removed from the main flow because the backing blobstores were historically flakey. They should be green (or at least not have obviously blobstore-related failures) before cutting a release.
 
@@ -104,7 +104,7 @@ Assortment of jobs for updating docs and other things.
 - Update v2 docs every time a new cf-deployment is released
 - Update release candidate in v3 docs every time `ci-passed` branch is updated
 
-#### update-bosh
+#### bbl-up
 
 Updates the bosh deployments for all the pipeline environments (using `bbl up`).
 
@@ -120,11 +120,7 @@ Rotate the bosh-managed certificates for all the pipeline environments every oth
 
 Automatically bumps golang version for capi-release components every time a new [golang-release](https://github.com/bosh-packages/golang-release) is available.
 
-### concourse
-
-Pipeline responsible for updating the concourse deployment that it is running on. Meta!
-
-### docker-images
+### docker-images (missing currently)
 
 Build the [docker images](https://github.com/cloudfoundry/capi-dockerfiles) that are used by other pipeline jobs. This is where all the dependencies that we need to run unit tests, acceptance tests, bosh deploys, etc come from.
 
@@ -139,15 +135,3 @@ Build the [docker images](https://github.com/cloudfoundry/capi-dockerfiles) that
    - Deploying pipeline bosh environments
    - Creating releases and other random things (`runtime-ci` tag)
    - Manging the bosh-lite pool
-
-### bosh-lite
-
-Pipeline responsible for managing the development [bosh-lite pool](https://github.com/pivotal-cf/capi-env-pool/).
-
-- Delete released bosh-lites
-- Create new bosh-lites if there is room in the pool
-- Post in slack every week with what bosh lites are claimed in the pool
-
-### streamline-team
-
-Very important pipeline that randomly selects a person every week and posts about it in slack.
