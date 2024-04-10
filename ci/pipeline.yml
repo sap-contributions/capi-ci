@@ -1216,6 +1216,7 @@ jobs:
     - in_parallel:
         - get: capi-release-tarball
           passed: [create-capi-release]
+          trigger: true
         - get: cloud_controller_ng
           passed: [ create-capi-release ]
         - get: capi-release
@@ -1429,6 +1430,7 @@ jobs:
     - in_parallel:
         - get: capi-release-tarball
           passed: [create-capi-release]
+          trigger: true
         - get: cloud_controller_ng
           passed: [ create-capi-release ]
         - get: capi-release
@@ -1644,6 +1646,7 @@ jobs:
     - in_parallel:
         - get: capi-release-tarball
           passed: [create-capi-release]
+          trigger: true
         - get: cloud_controller_ng
           passed: [ create-capi-release ]
         - get: capi-release
