@@ -79,24 +79,6 @@ kill_background_ssh_tunnel() {
   kill "${ssh_pid}"
 }
 
-cache_ip_for_hostname() {
-  dns_hostname="$1"
-  echo "${green}Saving IP address for '${dns_hostname}' to /etc/hosts...${reset}"
-
-  # `head -n1 | xargs echo` forces the CLI into non-tty mode and trims newlines
-  db_ip="$(bosh ssh -d "${BOSH_DEPLOYMENT_NAME}" "${BOSH_API_INSTANCE}" \
-    -c "dig +short ${dns_hostname}" -r --column=Stdout | head -n1 | xargs echo)"
-
-  # BOSH CLI return '-' if stdout is empty
-  if [ "${db_ip}" != "-" ]; then
-    if [ "$(uname -s)" == "Darwin" ]; then
-      echo "${db_ip} ${dns_hostname}" | sudo tee -a /etc/hosts
-    else
-      echo "${db_ip} ${dns_hostname}" >> /etc/hosts
-    fi
-  fi
-}
-
 run_migrations() {
   echo "${green}Applying latest migrations to deployment...${reset}"
   bosh ssh -d "${BOSH_DEPLOYMENT_NAME}" "${BOSH_API_INSTANCE}" "cd /var/vcap/packages/cloud_controller_ng/cloud_controller_ng; source /var/vcap/jobs/cloud_controller_ng/bin/ruby_version.sh; sudo bundle exec rake db:migrate"
@@ -116,9 +98,6 @@ main() {
   start_background_ssh_tunnel
 
   trap 'cleanup' EXIT
-
-  # manually create Hostname -> IP records as DNS lookups don't go thru the SSH tunnel
-  cache_ip_for_hostname "sql-db.service.cf.internal"
 
   run_migrations
 }
