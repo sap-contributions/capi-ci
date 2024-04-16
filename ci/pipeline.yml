@@ -19,6 +19,7 @@ groups:
   - capi-release-template-tests
   - create-capi-release
   - bump-capi-release
+  - kiki-back-compat-migrations
   - asha-mysql-acquire-pool
   - asha-mysql-deploy-cf
   - asha-mysql-tests
@@ -62,11 +63,13 @@ groups:
     - bbl-up-asha-mysql
     - scar-psql-acquire-bbl-up-pool
     - bbl-up-scar-psql
+    - bbl-up-kiki-mig
 
 - name: bbl-destroy
   jobs:
     - manual-bbl-destroy-asha-mysql
     - manual-bbl-destroy-scar-psql
+    - manual-bbl-destroy-kiki-mig
     - emergency-bbl-destroy-elsa-ha
     - elsa-ha-release-pool-manual
     - scar-psql-release-pool-manual
@@ -375,14 +378,14 @@ resources:
 #    repository: bosh-backup-and-restore
 #    access_token: ((ari-wg-gitbot-token))
 
-#- name: runtime-ci
-#  type: git
-#  source:
-#    branch: main
-#    uri: https://github.com/cloudfoundry/runtime-ci.git
-#    username: ((ari-wg-gitbot-username))
-#    password: ((ari-wg-gitbot-token))
-#
+- name: runtime-ci
+  type: git
+  source:
+    branch: main
+    uri: https://github.com/cloudfoundry/runtime-ci.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
 #- name: gcp-xenial-stemcell
 #  type: bosh-io-stemcell
 #  source:
@@ -424,23 +427,23 @@ resources:
     password: ((ari-wg-gitbot-token))
 
 
-## Kiki resources
-#- name: kiki-bbl-state
-#  type: git
-#  source:
-#    branch: main
-#    uri: https://github.com/cloudfoundry/capi-ci-private.git
-#    username: ((ari-wg-gitbot-username))
-#    password: ((ari-wg-gitbot-token))
-#
-#- name: kiki-integration-configs
-#  type: git
-#  source:
-#    branch: main
-#    uri: https://github.com/cloudfoundry/capi-ci-private.git
-#    username: ((ari-wg-gitbot-username))
-#    password: ((ari-wg-gitbot-token))
-#
+# Kiki resources
+- name: kiki-mig-bbl-state
+  type: git
+  source:
+    branch: main
+    uri: https://github.com/cloudfoundry/capi-ci-private.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
+- name: kiki-integration-configs
+  type: git
+  source:
+    branch: main
+    uri: https://github.com/cloudfoundry/capi-ci-private.git
+    username: ((ari-wg-gitbot-username))
+    password: ((ari-wg-gitbot-token))
+
 # Asha resources
 - name: asha-mysql-bbl-state
   type: git
@@ -695,6 +698,148 @@ jobs:
   - put: capi-release-tarball
     params:
       file: created-capi-release/capi-*.tgz
+
+- name: kiki-back-compat-migrations
+  serial: true
+  serial_groups: [kiki-mig]
+  plan:
+  - in_parallel:
+    - get: cloud_controller_ng
+      passed: [create-capi-release]
+    - get: cf-deployment-concourse-tasks
+      resource: cf-deployment-concourse-tasks
+    - get: cf-deployment
+    - get: kiki-mig-bbl-state
+    - get: kiki-integration-configs
+    - get: sync-integration-tests
+    - get: capi-bara-tests
+    - get: capi-ci
+    - get: capi-ci-private
+    - get: capi-release
+      passed:
+      - create-capi-release
+      resource: capi-release-develop
+    - get: capi-release-tarball
+      passed:
+      - create-capi-release
+      trigger: true
+    - get: cf-acceptance-tests
+    - get: runtime-ci
+  - task: kiki-stemcell-upload
+    file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
+    input_mapping:
+      bbl-state: kiki-mig-bbl-state
+    params:
+      BBL_STATE_DIR: "kiki-mig"
+  - task: upload-capi-release-tarball
+    file: capi-ci/ci/bosh/upload-release.yml
+    input_mapping:
+      bbl-state: kiki-mig-bbl-state
+      release-tarball: capi-release-tarball
+    params:
+      BBL_STATE_DIR: "kiki-mig"
+  - task: delete-deployment
+    file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+    input_mapping:
+      bbl-state: kiki-mig-bbl-state
+    params:
+      BBL_STATE_DIR: kiki-mig
+  - task: collect-ops-files
+    file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+    input_mapping:
+      base-ops-files: cf-deployment
+      new-ops-files: capi-ci
+    params:
+      NEW_OPS_FILES: &kiki-ops-files-to-collect |
+        cf-deployment-operations/skip-cert-verify.yml
+        cf-deployment-operations/scale-up-cells.yml
+        cf-deployment-operations/scale-up-dopplers.yml
+        cf-deployment-operations/performance/scale-generic-worker-processes.yml
+        cf-deployment-operations/log-all-sequel-activity.yml
+        cf-deployment-operations/temporary/disable-uaa-get-requests.yml
+  - task: deploy
+    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+    input_mapping:
+      bbl-state: capi-ci-private
+      ops-files: collected-ops-files
+      vars-files: capi-ci-private
+    params:
+      BBL_STATE_DIR: kiki-mig
+      SYSTEM_DOMAIN: &kiki-domain cf.kiki.app-runtime-interfaces.ci.cloudfoundry.org
+      OPS_FILES: &kiki-ops-files-for-deploy |
+        base-ops-files/operations/add-persistent-isolation-segment-diego-cell.yml
+        skip-cert-verify.yml
+        base-ops-files/operations/scale-to-one-az.yml
+        base-ops-files/operations/test/scale-to-one-az-addon-parallel-cats.yml
+        scale-up-cells.yml
+        scale-up-dopplers.yml
+        scale-generic-worker-processes.yml
+        base-ops-files/operations/use-postgres.yml
+        base-ops-files/operations/test/speed-up-dynamic-asgs.yml
+        log-all-sequel-activity.yml
+        disable-uaa-get-requests.yml
+  - task: ensure-api-healthy
+    file: runtime-ci/tasks/ensure-api-healthy/task.yml
+    params:
+      SYSTEM_DOMAIN: *kiki-domain
+      CONFIG_FILE_PATH: kiki/cats_integration_config.json
+      CATS_INTEGRATION_CONFIG_FILE: "kiki/cats_integration_config.json"
+    input_mapping:
+      cats-integration-config: kiki-integration-configs
+      integration-configs: kiki-integration-configs
+  - task: extract-bbl-environment
+    file: capi-ci/ci/bbl-tasks/extract_bbl_environment.yml
+    params:
+      ENV_NAME: kiki-mig
+  - task: apply-cc-migrations
+    file: capi-ci/ci/migrations/apply_latest_migrations.yml
+    params:
+      BBL_STATE_DIR: "kiki-mig"
+  - task: updated-integration-configs
+    file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+    input_mapping:
+      bbl-state: kiki-mig-bbl-state
+      integration-configs: kiki-integration-configs
+    params:
+      BBL_STATE_DIR: "kiki-mig"
+      CATS_INTEGRATION_CONFIG_FILE: "kiki-mig/cats_integration_config.json"
+      SYSTEM_DOMAIN: *kiki-domain
+    ensure:
+      put: kiki-integration-configs
+      params:
+        repository: updated-integration-configs
+        rebase: true
+  - task: enable-feature-flags
+    file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
+    input_mapping:
+      bbl-state: kiki-mig-bbl-state
+    params:
+      BBL_STATE_DIR: "kiki-mig"
+      SYSTEM_DOMAIN: *kiki-domain
+      ENABLED_FEATURE_FLAGS: "diego_docker"
+  - in_parallel:
+    - task: run-cats
+      file: cf-deployment-concourse-tasks/run-cats/task.yml
+      input_mapping:
+        integration-config: updated-integration-configs
+      params:
+        NODES: 6
+        CONFIG_FILE_PATH: "kiki-mig/cats_integration_config.json"
+        CAPTURE_LOGS: true
+    - task: sync-integration-tests
+      file: sync-integration-tests/concourse/task_with_credhub.yml
+      attempts: 5
+      input_mapping:
+        environment: capi-ci-private
+      params:
+        BOSH_DEPLOYMENT_NAME: cf
+        BOSH_API_INSTANCE: api/0
+        CF_API_TARGET: https://api.cf.kiki.app-runtime-interfaces.ci.cloudfoundry.org
+        CF_SKIP_SSL_VALIDATION: true
+        CF_APPS_DOMAIN: *kiki-domain
+        BBL_STATE_DIR: kiki-mig
+        USE_CREDHUB: true
+        RUN_REVISIONS_TESTS: false
 
 - name: ship-it
   serial_groups: [version]
@@ -956,6 +1101,90 @@ jobs:
         BBL_STATE_DIR: "elsa-ha/bbl-state"
     - put: elsa-ha-pool
       params: { release: elsa-ha-pool }
+
+
+- name: bbl-up-kiki-mig
+  serial: true
+  serial_groups:
+  - kiki-mig
+  plan:
+    - in_parallel:
+        steps:
+          - get: cf-deployment-concourse-tasks
+            resource: cf-deployment-concourse-tasks
+          - get: kiki-mig-bbl-state
+          - get: capi-ci
+          - get: capi-ci-private
+          - get: cf-deployment
+    - task: bbl-up-kiki-mig
+      file: cf-deployment-concourse-tasks/bbl-up/task.yml
+      input_mapping:
+        bbl-config: kiki-mig-bbl-state
+        bbl-state: kiki-mig-bbl-state
+      params:
+        #BBL_CONFIG_DIR: kiki-mig/bbl-config
+        BBL_ENV_NAME: kiki-mig
+        BBL_GCP_PROJECT_ID: app-runtime-interfaces-wg
+        BBL_GCP_REGION: us-east4
+        BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-kiki-mig-service-account))
+        BBL_IAAS: gcp
+        BBL_LB_CERT: ((kiki_lb.certificate))
+        BBL_LB_KEY: ((kiki_lb.private_key))
+        BBL_STATE_DIR: kiki-mig
+        LB_DOMAIN: cf.kiki.app-runtime-interfaces.ci.cloudfoundry.org
+        TRUSTED_CA: ((relint_ca.certificate))
+      ensure:
+        params:
+          rebase: true
+          repository: updated-bbl-state
+        put: kiki-mig-bbl-state
+    - task: create-dns-record
+      attempts: 3
+      file: capi-ci/ci/bbl-tasks/create-dns-record.yml
+      input_mapping:
+        bbl-state: updated-bbl-state
+      params:
+        BBL_STATE_DIR: "kiki-mig"
+        DNS_DOMAIN: *kiki-domain
+        GCP_DNS_SERVICE_ACCOUNT_KEY: ((capi-bbl-dns-service-account))
+        GCP_PROJECT_ID: app-runtime-interfaces-wg
+        SHARED_DNS_ZONE_NAME: "app-runtime-interfaces"
+
+- name: manual-bbl-destroy-kiki-mig
+  serial: true
+  serial_groups:
+  - kiki-mig
+  plan:
+    - in_parallel:
+        steps:
+        - get: cf-deployment-concourse-tasks
+          resource: cf-deployment-concourse-tasks
+        - get: kiki-mig-bbl-state
+        - get: capi-ci
+        - get: capi-ci-private
+        - get: cf-deployment
+    - task: bbl-destroy-kiki-mig
+      file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
+      ensure:
+        params:
+          rebase: true
+          repository: updated-bbl-state
+        put: kiki-mig-bbl-state
+      input_mapping:
+        bbl-state: kiki-mig-bbl-state
+      params:
+        #BBL_CONFIG_DIR: kiki-mig/bbl-config
+        #BBL_ENV_NAME: kiki-mig
+        #BBL_GCP_PROJECT_ID: app-runtime-interfaces-wg
+        #BBL_GCP_REGION: us-east4
+        BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-kiki-mig-service-account))
+        BBL_IAAS: gcp
+        #BBL_LB_CERT: ((kiki_lb.certificate))
+        #BBL_LB_KEY: ((kiki_lb.private_key))
+        BBL_STATE_DIR: kiki-mig
+        #LB_DOMAIN: cf.kiki.app-runtime-interfaces.ci.cloudfoundry.org
+        #TRUSTED_CA: ((relint_ca.certificate))
+
 
 - name: asha-mysql-acquire-bbl-up-pool
   serial: true
