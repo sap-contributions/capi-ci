@@ -1434,6 +1434,7 @@ jobs:
         - asha-mysql-destroy-cf
         - scar-psql-destroy-cf
         - elsa-ha-tests
+        - kiki-back-compat-migrations
       trigger: true
   - put: capi-release-ci-passed
     params:
