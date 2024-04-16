@@ -88,10 +88,10 @@ pushd cloud_controller_ng > /dev/null
   bundle install
 
   if [ -n "${RUN_IN_PARALLEL}" ]; then
-    rubocop --parallel
+    bundle exec rubocop --parallel
     bundle exec rake spec:all
   else
-    rubocop
+    bundle exec rubocop
     bundle exec rake spec:serial
   fi
 popd > /dev/null
