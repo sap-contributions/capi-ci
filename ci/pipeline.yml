@@ -749,8 +749,6 @@ jobs:
     - get: capi-final-releases
       passed: [ship-it]
       trigger: true
-    - get: next-version
-      passed: [ ship-it ]
     - get: github-published-release
       params:
         globs: []

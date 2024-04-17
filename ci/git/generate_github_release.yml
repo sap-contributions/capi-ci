@@ -11,7 +11,6 @@ inputs:
   - name: capi-release
   - name: capi-final-releases
   - name: github-published-release
-  - name: next-version
 
 outputs:
   - name: generated-release
