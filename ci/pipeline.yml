@@ -1173,18 +1173,9 @@ jobs:
       input_mapping:
         bbl-state: kiki-mig-bbl-state
       params:
-        #BBL_CONFIG_DIR: kiki-mig/bbl-config
-        #BBL_ENV_NAME: kiki-mig
-        #BBL_GCP_PROJECT_ID: app-runtime-interfaces-wg
-        #BBL_GCP_REGION: us-east4
         BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-kiki-mig-service-account))
         BBL_IAAS: gcp
-        #BBL_LB_CERT: ((kiki_lb.certificate))
-        #BBL_LB_KEY: ((kiki_lb.private_key))
         BBL_STATE_DIR: kiki-mig
-        #LB_DOMAIN: cf.kiki.app-runtime-interfaces.ci.cloudfoundry.org
-        #TRUSTED_CA: ((relint_ca.certificate))
-
 
 - name: asha-mysql-acquire-bbl-up-pool
   serial: true
