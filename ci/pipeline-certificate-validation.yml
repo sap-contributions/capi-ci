@@ -32,6 +32,8 @@ jobs:
           trigger: true
     - task: validate-certs
       file: runtime-ci/tasks/check-certs/task.yml
+      input_mapping:
+        relint-envs: capi-ci-private
       params:
         DAYS_LEFT_THRESHOLD: 16
-        PATH_TO_VERIFY: capi-ci-private
+        PATH_TO_VERIFY: relint-envs
