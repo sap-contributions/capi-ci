@@ -37,3 +37,16 @@ jobs:
       params:
         DAYS_LEFT_THRESHOLD: 16
         PATH_TO_VERIFY: relint-envs
+        PATHS_TO_IGNORE:
+          - arya/certs/load-balancer
+          - ci-green/vars
+          - elsa/self-signed-certs
+          - gabrielle-postgres/certs
+          - kiki/certs
+          - leia-azure-storage/certs
+          - mulan/certs
+          - rey-gcs-storage/certs
+          - ripley/certs
+          - rose/certs
+          - rose/vars
+          - xena-mysql/certs
