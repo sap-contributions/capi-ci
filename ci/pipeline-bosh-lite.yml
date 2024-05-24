@@ -34,7 +34,7 @@ resources:
   - name: ready-pool
     type: pool
     source:
-      branch: ari-pipeline
+      branch: main
       uri: git@github.com:cloudfoundry/capi-env-pool.git
       pool: bosh-lites
       private_key: ((pcf_bosh_lite_pool_deploy_key))
@@ -48,7 +48,7 @@ resources:
   - name: broken-pool
     type: pool
     source:
-      branch: ari-pipeline
+      branch: main
       uri: git@github.com:cloudfoundry/capi-env-pool.git
       pool: broken-bosh-lites
       private_key: ((pcf_bosh_lite_pool_deploy_key))
@@ -56,7 +56,7 @@ resources:
   - name: building-pool
     type: pool
     source:
-      branch: ari-pipeline
+      branch: main
       uri: git@github.com:cloudfoundry/capi-env-pool.git
       pool: building-bosh-lites
       private_key: ((pcf_bosh_lite_pool_deploy_key))
@@ -64,13 +64,13 @@ resources:
   - name: pool-repo
     type: git
     source:
-      branch: ari-pipeline
+      branch: main
       uri: git@github.com:cloudfoundry/capi-env-pool.git
       private_key: ((pcf_bosh_lite_pool_deploy_key))
   - name: create-bosh-lite-trigger
     type: git
     source:
-      branch: ari-pipeline
+      branch: main
       uri: git@github.com:cloudfoundry/capi-env-pool.git
       private_key: ((pcf_bosh_lite_pool_deploy_key))
       paths:
