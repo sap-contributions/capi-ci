@@ -28,7 +28,7 @@ export BOSH_LITE_DOMAIN="$(bosh interpolate --path /system_domain "${terraform_m
 export CREDHUB_SERVER="$(bosh interpolate --path /external_ip "${terraform_metadata_file}"):8844"
 export CREDHUB_CLIENT="credhub-admin"
 export CREDHUB_SECRET="$(bosh interpolate --path /credhub_admin_client_secret "${creds_file}")"
-export CREDHUB_CA="$(bosh interpolate --path /credhub_ca/ca "${creds_file}")"
+export CREDHUB_CA_CERT="$(bosh interpolate --path /credhub_ca/ca "${creds_file}")"
 EOD
 
 cp "${terraform_name_file}" "${output_dir}/name"
