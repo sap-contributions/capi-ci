@@ -24,6 +24,10 @@ groups:
       - asha-mysql-deploy-cf
       - asha-mysql-tests
       - asha-mysql-destroy-cf
+      - olaf-mysql-acquire-pool
+      - olaf-mysql-deploy-cf
+      - olaf-mysql-tests
+      - olaf-mysql-destroy-cf
       - scar-psql-acquire-pool
       - scar-psql-deploy-cf
       - scar-psql-tests
@@ -50,16 +54,20 @@ groups:
       - bbl-up-elsa-ha
       - asha-mysql-acquire-bbl-up-pool
       - bbl-up-asha-mysql
+      - olaf-mysql-acquire-bbl-up-pool
+      - bbl-up-olaf-mysql
       - scar-psql-acquire-bbl-up-pool
       - bbl-up-scar-psql
       - bbl-up-kiki-mig
   - name: bbl-destroy
     jobs:
       - manual-bbl-destroy-asha-mysql
+      - manual-bbl-destroy-olaf-mysql
       - manual-bbl-destroy-scar-psql
       - manual-bbl-destroy-kiki-mig
       - emergency-bbl-destroy-elsa-ha
       - elsa-ha-release-pool-manual
+      - olaf-mysql-release-pool-manual
       - scar-psql-release-pool-manual
       - asha-mysql-release-pool-manual
   - name: bump-dependencies
@@ -326,6 +334,30 @@ resources:
       uri: https://github.com/cloudfoundry/capi-ci-private.git
       branch: ari-bbl-env-pool
       pool: asha-mysql
+      username: ((ari-wg-gitbot-username))
+      password: ((ari-wg-gitbot-token))
+  # Olaf resources
+  - name: olaf-mysql-bbl-state
+    type: git
+    source:
+      branch: main
+      uri: https://github.com/cloudfoundry/capi-ci-private.git
+      username: ((ari-wg-gitbot-username))
+      password: ((ari-wg-gitbot-token))
+  - name: olaf-mysql-integration-configs
+    type: git
+    source:
+      branch: main
+      uri: https://github.com/cloudfoundry/capi-ci-private.git
+      username: ((ari-wg-gitbot-username))
+      password: ((ari-wg-gitbot-token))
+  - name: olaf-mysql-pool
+    type: pool
+    icon: pool
+    source:
+      uri: https://github.com/cloudfoundry/capi-ci-private.git
+      branch: ari-bbl-env-pool
+      pool: olaf-mysql
       username: ((ari-wg-gitbot-username))
       password: ((ari-wg-gitbot-token))
   # Scar resources
@@ -1058,6 +1090,106 @@ jobs:
           params:
             repository: updated-bbl-state
             rebase: true
+  - name: olaf-mysql-acquire-bbl-up-pool
+    serial: true
+    plan:
+      - in_parallel:
+          - get: nightly
+            trigger: true
+          - put: olaf-mysql-pool
+            params:
+              acquire: true
+        timeout: 4h
+  - name: olaf-mysql-release-pool-manual
+    plan:
+      - get: olaf-mysql-pool
+    ensure:
+      try:
+        put: olaf-mysql-pool
+        params:
+          release: olaf-mysql-pool
+  - name: bbl-up-olaf-mysql
+    serial: true
+    serial_groups:
+      - olaf-mysql
+    plan:
+      - in_parallel:
+          - get: cf-deployment-concourse-tasks
+            resource: cf-deployment-concourse-tasks
+          - get: olaf-mysql-bbl-state
+          - get: capi-ci
+          - get: capi-ci-private
+          - get: cf-deployment
+          - get: olaf-mysql-pool
+            passed:
+              - olaf-mysql-acquire-bbl-up-pool
+            trigger: true
+      - task: bbl-up-olaf-mysql
+        file: cf-deployment-concourse-tasks/bbl-up/task.yml
+        input_mapping:
+          bbl-state: capi-ci-private
+          bbl-config: capi-ci-private
+        params:
+          BBL_AWS_ACCESS_KEY_ID: ((capi-bbl-olaf-aws-access-key))
+          BBL_AWS_REGION: eu-central-1
+          BBL_AWS_SECRET_ACCESS_KEY: ((capi-bbl-olaf-aws-secret-key))
+          BBL_CONFIG_DIR: olaf-mysql/bbl-config
+          BBL_ENV_NAME: olaf-mysql
+          BBL_IAAS: aws
+          BBL_LB_CERT: ((olaf_lb.certificate))
+          BBL_LB_KEY: ((olaf_lb.private_key))
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+          LB_DOMAIN: &olaf-mysql-domain cf.olaf.app-runtime-interfaces.ci.cloudfoundry.org
+        ensure:
+          put: olaf-mysql-bbl-state
+          params:
+            repository: updated-bbl-state
+            rebase: true
+      - task: create-dns-record
+        attempts: 3
+        file: capi-ci/ci/bbl-tasks/create-dns-record.yml
+        input_mapping:
+          bbl-state: updated-bbl-state
+        params:
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+          DNS_DOMAIN: *olaf-mysql-domain
+          GCP_DNS_SERVICE_ACCOUNT_KEY: ((capi-bbl-dns-service-account))
+          GCP_PROJECT_ID: app-runtime-interfaces-wg
+          SHARED_DNS_ZONE_NAME: app-runtime-interfaces
+      - task: run-bosh-cleanup
+        file: capi-ci/ci/bbl-tasks/run-bosh-cleanup.yml
+        input_mapping:
+          bbl-state: updated-bbl-state
+        params:
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+      - put: olaf-mysql-pool
+        params:
+          release: olaf-mysql-pool
+  - name: manual-bbl-destroy-olaf-mysql
+    serial: true
+    serial_groups:
+      - olaf-mysql
+    plan:
+      - in_parallel:
+          - get: cf-deployment-concourse-tasks
+            resource: cf-deployment-concourse-tasks
+          - get: olaf-mysql-bbl-state
+          - get: capi-ci
+          - get: capi-ci-private
+      - task: manual-bbl-destroy-olaf-mysql
+        file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
+        input_mapping:
+          bbl-state: capi-ci-private
+          bbl-config: capi-ci-private
+        params:
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+          BBL_AWS_ACCESS_KEY_ID: ((capi-bbl-olaf-aws-access-key))
+          BBL_AWS_SECRET_ACCESS_KEY: ((capi-bbl-olaf-aws-secret-key))
+        ensure:
+          put: olaf-mysql-bbl-state
+          params:
+            repository: updated-bbl-state
+            rebase: true
   - name: scar-psql-acquire-bbl-up-pool
     serial: true
     plan:
@@ -1207,6 +1339,7 @@ jobs:
           - get: capi-release-tarball
             passed:
               - asha-mysql-destroy-cf
+              - olaf-mysql-destroy-cf
               - scar-psql-destroy-cf
               - elsa-ha-tests
               - kiki-back-compat-migrations
@@ -1437,6 +1570,231 @@ jobs:
       - put: asha-mysql-pool
         params:
           release: asha-mysql-pool
+  - name: olaf-mysql-acquire-pool
+    serial: true
+    plan:
+      - in_parallel:
+          - get: capi-release-tarball
+            passed:
+              - create-capi-release
+            trigger: true
+          - get: cloud_controller_ng
+            passed:
+              - create-capi-release
+          - get: capi-release
+            resource: capi-release-develop
+            passed:
+              - create-capi-release
+          - put: olaf-mysql-pool
+            params:
+              acquire: true
+        timeout: 4h
+  - name: olaf-mysql-deploy-cf
+    serial: true
+    serial_groups:
+      - olaf-mysql
+    plan:
+      - in_parallel:
+          - get: cloud_controller_ng
+            passed:
+              - olaf-mysql-acquire-pool
+          - get: cf-deployment
+            resource: cf-deployment
+          - get: capi-ci
+          - get: capi-ci-private
+          - get: cf-deployment-concourse-tasks
+            resource: cf-deployment-concourse-tasks
+          - get: capi-release
+            resource: capi-release-develop
+            passed:
+              - olaf-mysql-acquire-pool
+          - get: capi-release-tarball
+          - get: olaf-mysql-pool
+            passed:
+              - olaf-mysql-acquire-pool
+            trigger: true
+          - get: olaf-mysql-bbl-state
+      - task: delete-deployment
+        file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+        input_mapping:
+          bbl-state: olaf-mysql-bbl-state
+        params:
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+          IGNORE_ERRORS: true
+      - task: stemcell-upload
+        file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
+        input_mapping:
+          bbl-state: capi-ci-private
+        params:
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+      - task: upload-capi-release-tarball
+        file: capi-ci/ci/bosh/upload-release.yml
+        input_mapping:
+          bbl-state: olaf-mysql-bbl-state
+          release-tarball: capi-release-tarball
+        params:
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+      - task: collect-ops-files
+        file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+        input_mapping:
+          base-ops-files: cf-deployment
+          new-ops-files: capi-ci
+        params:
+          NEW_OPS_FILES: |
+            cf-deployment-operations/use-latest-capi.yml
+            cf-deployment-operations/scale-up-cloud-controller.yml
+            cf-deployment-operations/rotate-cc-database-key/add-database-encryption-key.yml
+            cf-deployment-operations/scale-up-cells.yml
+            cf-deployment-operations/scale-generic-worker-processes.yml
+            cf-deployment-operations/disable-uaa-get-requests.yml
+            cf-deployment-operations/seed-credhub-asg.yml
+            cf-deployment-operations/seed-uaa-asg.yml
+      - task: deploy
+        file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+        input_mapping:
+          bbl-state: capi-ci-private
+          ops-files: collected-ops-files
+          vars-files: capi-ci-private
+        params:
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+          SYSTEM_DOMAIN: *olaf-mysql-domain
+          OPS_FILES: |
+            base-ops-files/operations/aws.yml
+            base-ops-files/operations/use-external-blobstore.yml
+            base-ops-files/operations/use-s3-blobstore.yml
+            base-ops-files/operations/use-compiled-releases.yml
+            use-latest-capi.yml
+            scale-up-cloud-controller.yml
+            add-database-encryption-key.yml
+            scale-up-cells.yml
+            scale-generic-worker-processes.yml
+            disable-uaa-get-requests.yml
+            seed-credhub-asg.yml
+            base-ops-files/operations/scale-database-cluster.yml
+            base-ops-files/operations/test/speed-up-dynamic-asgs.yml
+            seed-uaa-asg.yml
+  - name: olaf-mysql-tests
+    serial: true
+    serial_groups:
+      - olaf-mysql
+    plan:
+      - in_parallel:
+          - get: capi-ci
+          - get: capi-ci-private
+          - get: cf-deployment-concourse-tasks
+            resource: cf-deployment-concourse-tasks
+          - get: capi-release-tarball
+          - get: olaf-mysql-pool
+            passed:
+              - olaf-mysql-deploy-cf
+            trigger: true
+          - get: olaf-mysql-bbl-state
+          - get: olaf-mysql-integration-configs
+          - get: cf-acceptance-tests
+          - get: sync-integration-tests
+          - get: capi-bara-tests
+          - get: cf-cli
+      - task: updated-integration-configs
+        file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+        input_mapping:
+          bbl-state: olaf-mysql-bbl-state
+          integration-configs: olaf-mysql-integration-configs
+        params:
+          CATS_INTEGRATION_CONFIG_FILE: olaf-mysql/cats_integration_config.json
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+          SYSTEM_DOMAIN: *olaf-mysql-domain
+        ensure:
+          put: olaf-mysql-integration-configs
+          params:
+            repository: updated-integration-configs
+            rebase: true
+      - task: updated-baras-integration-configs
+        file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+        input_mapping:
+          bbl-state: capi-ci-private
+          integration-configs: updated-integration-configs
+        params:
+          CATS_INTEGRATION_CONFIG_FILE: olaf-mysql/baras_integration_config.json
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+          SYSTEM_DOMAIN: *olaf-mysql-domain
+        ensure:
+          put: olaf-mysql-integration-configs
+          params:
+            repository: updated-integration-configs
+            rebase: true
+      - task: enable-feature-flags
+        file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
+        input_mapping:
+          bbl-state: olaf-mysql-bbl-state
+        params:
+          SYSTEM_DOMAIN: *olaf-mysql-domain
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+          ENABLED_FEATURE_FLAGS: diego_docker
+      - task: cleanup-acceptance-test-leftovers
+        file: capi-ci/ci/acceptance-test-utils/cats_cleanup.yml
+        params:
+          CF_API_TARGET: &olaf-mysql-api-url https://api.cf.olaf.app-runtime-interfaces.ci.cloudfoundry.org
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+      - in_parallel:
+          - task: acceptance-tests
+            file: cf-deployment-concourse-tasks/run-cats/task.yml
+            input_mapping:
+              integration-config: updated-integration-configs
+            params:
+              NODES: 10
+              CONFIG_FILE_PATH: olaf-mysql/cats_integration_config.json
+              CAPTURE_LOGS: true
+          - task: capi-bara-tests
+            file: capi-ci/ci/baras/run-baras.yml
+            input_mapping:
+              integration-config: updated-integration-configs
+            params:
+              NODES: 6
+              FLAKE_ATTEMPTS: 2
+              CONFIG_FILE_PATH: olaf-mysql/baras_integration_config.json
+          - task: sync-integration-tests
+            file: sync-integration-tests/concourse/task_with_credhub.yml
+            attempts: 3
+            input_mapping:
+              environment: capi-ci-private
+            params:
+              BOSH_DEPLOYMENT_NAME: cf
+              BOSH_API_INSTANCE: api/0
+              CF_API_TARGET: *olaf-mysql-api-url
+              CF_SKIP_SSL_VALIDATION: true
+              CF_APPS_DOMAIN: *olaf-mysql-domain
+              BBL_STATE_DIR: olaf-mysql/bbl-state
+              USE_CREDHUB: true
+              RUN_REVISIONS_TESTS: true
+              FLAKE_ATTEMPTS: 2
+      - task: extract-bbl-environment
+        file: capi-ci/ci/bbl-tasks/extract_bbl_environment.yml
+        params:
+          ENV_NAME: olaf-mysql
+  - name: olaf-mysql-destroy-cf
+    serial: true
+    serial_groups:
+      - olaf-mysql
+    plan:
+      - in_parallel:
+          - get: cf-deployment-concourse-tasks
+            resource: cf-deployment-concourse-tasks
+          - get: capi-release-tarball
+          - get: olaf-mysql-pool
+            passed:
+              - olaf-mysql-tests
+            trigger: true
+          - get: olaf-mysql-bbl-state
+      - task: delete-deployment
+        file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+        input_mapping:
+          bbl-state: olaf-mysql-bbl-state
+        params:
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+          IGNORE_ERRORS: true
+      - put: olaf-mysql-pool
+        params:
+          release: olaf-mysql-pool
   - name: scar-psql-acquire-pool
     serial: true
     plan:
