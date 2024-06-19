@@ -25,7 +25,8 @@ create_dns_record() {
   gcloud config set project "${GCP_PROJECT_ID}"
 
   if [ "${IS_BOSH_LITE}" == "false" ]; then
-    bbl_name_servers_json="$( bbl lbs --json | jq -r '.cf_system_domain_dns_servers' )"
+    # "cf_system_domain_dns_servers" is for GCP and "env_dns_zone_name_servers" for AWS ('//' is the alternative operator)
+    bbl_name_servers_json="$( bbl lbs --json | jq -r '.cf_system_domain_dns_servers // .env_dns_zone_name_servers' )"
     bbl_name_servers_raw="$( echo "${bbl_name_servers_json}" | jq -r 'join(" ")' )"
     gcp_name_servers_json="$( gcloud dns record-sets list --zone "${SHARED_DNS_ZONE_NAME}" --name "${DNS_DOMAIN}" --format=json )"
     gcloud dns record-sets transaction start --zone="${SHARED_DNS_ZONE_NAME}"
