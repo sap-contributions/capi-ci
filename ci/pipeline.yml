@@ -1662,15 +1662,13 @@ jobs:
             base-ops-files/operations/use-s3-blobstore.yml
             base-ops-files/operations/use-compiled-releases.yml
             use-latest-capi.yml
-            scale-up-cloud-controller.yml
-            add-database-encryption-key.yml
             scale-up-cells.yml
             scale-generic-worker-processes.yml
             disable-uaa-get-requests.yml
             seed-credhub-asg.yml
+            seed-uaa-asg.yml
             base-ops-files/operations/scale-database-cluster.yml
             base-ops-files/operations/test/speed-up-dynamic-asgs.yml
-            seed-uaa-asg.yml
   - name: olaf-mysql-tests
     serial: true
     serial_groups:
@@ -1759,7 +1757,7 @@ jobs:
               BOSH_DEPLOYMENT_NAME: cf
               BOSH_API_INSTANCE: api/0
               CF_API_TARGET: *olaf-mysql-api-url
-              CF_SKIP_SSL_VALIDATION: true
+              CF_SKIP_SSL_VALIDATION: false
               CF_APPS_DOMAIN: *olaf-mysql-domain
               BBL_STATE_DIR: olaf-mysql/bbl-state
               USE_CREDHUB: true
