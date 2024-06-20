@@ -1697,6 +1697,8 @@ jobs:
             seed-uaa-asg.yml
             base-ops-files/operations/scale-database-cluster.yml
             base-ops-files/operations/test/speed-up-dynamic-asgs.yml
+          VARS_FILES: |
+            olaf-mysql/bbl-state/vars/director-vars-file.yml
   - name: olaf-mysql-tests
     serial: true
     serial_groups:
