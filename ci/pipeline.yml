@@ -1654,6 +1654,7 @@ jobs:
           bbl-state: capi-ci-private
         params:
           BBL_STATE_DIR: olaf-mysql/bbl-state
+          INFRASTRUCTURE: aws
       - task: upload-capi-release-tarball
         file: capi-ci/ci/bosh/upload-release.yml
         input_mapping:
