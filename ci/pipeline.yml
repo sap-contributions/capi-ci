@@ -1797,6 +1797,12 @@ jobs:
         file: capi-ci/ci/bbl-tasks/extract_bbl_environment.yml
         params:
           ENV_NAME: olaf-mysql
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+      - task: run-blobstore-benchmarks
+        file: capi-ci/ci/benchmarks/run-blobstore-benchmarks.yml
+        privileged: true
+        params:
+          BBL_STATE_DIR: olaf-mysql/bbl-state
   - name: olaf-mysql-destroy-cf
     serial: true
     serial_groups:
