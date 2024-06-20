@@ -1787,7 +1787,7 @@ jobs:
               BOSH_DEPLOYMENT_NAME: cf
               BOSH_API_INSTANCE: api/0
               CF_API_TARGET: *olaf-mysql-api-url
-              CF_SKIP_SSL_VALIDATION: false
+              CF_SKIP_SSL_VALIDATION: true
               CF_APPS_DOMAIN: *olaf-mysql-domain
               BBL_STATE_DIR: olaf-mysql/bbl-state
               USE_CREDHUB: true
