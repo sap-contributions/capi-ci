@@ -36,6 +36,12 @@ See [pipeline.yml](https://github.com/cloudfoundry/capi-ci/blob/main/ci/pipeline
     |          · Platform: GCP                                             |
     |          · Blobstore: WebDAV                                         |
     |                                                                      |
+    |  Olaf: used for running CATS and CAPI-BARA tests on AWS with MySQL   |
+    |          · Short-lived                                               |
+    |          · Database: MySQL                                           |
+    |          · Platform: AWS                                             |
+    |          · Blobstore: S3                                             |
+    |                                                                      |
     |  Scar: used for testing CATS and CAPI-BARA tests on PostgreSQL       |
     |          · Short-lived                                               |
     |          · Database: PostgreSQL                                      |
