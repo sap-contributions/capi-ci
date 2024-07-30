@@ -60,7 +60,7 @@ Kiki starts with an older version of cf-deployment. It then runs the new migrati
 
 ### capi
 
-This pipeline is responsible for testing, building, and releasing capi-release.
+This pipeline is responsible for testing, building, and releasing capi-release. For guidance on releasing CAPI, see [this document](https://github.com/cloudfoundry/capi-release/blob/develop/docs/releasing-capi.md).
 
 #### capi-release
 
