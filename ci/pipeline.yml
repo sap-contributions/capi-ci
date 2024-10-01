@@ -232,7 +232,8 @@ resources:
     source:
       uri: https://github.com/nginx/nginx
       branch: master
-      tag_filter: release-1\.27\..*
+      tag_regex: release-1\.27\..*
+      fetch_tags: true
   - name: valkey-release
     type: github-release
     icon: github
