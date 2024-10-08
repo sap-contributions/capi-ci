@@ -1,0 +1,85 @@
+---
+resources:
+  - name: monthly
+    type: time
+    icon: clock-outline
+    source:
+      interval: 30d
+  - name: capi-ci
+    type: git
+    icon: git
+    source:
+      uri: https://github.com/cloudfoundry/capi-ci.git
+      branch: main
+      username: ((ari-wg-gitbot-username))
+      password: ((ari-wg-gitbot-token))
+  - name: cf-deployment-concourse-tasks
+    type: git
+    icon: git
+    source:
+      uri: https://github.com/cloudfoundry/cf-deployment-concourse-tasks.git
+      branch: main
+      username: ((ari-wg-gitbot-username))
+      password: ((ari-wg-gitbot-token))
+  - name: elsa-ha-bbl-state
+    type: git
+    icon: git
+    source:
+      uri: https://github.com/cloudfoundry/capi-ci-private.git
+      branch: main
+      username: ((ari-wg-gitbot-username))
+      password: ((ari-wg-gitbot-token))
+  - name: elsa-ha-pool
+    type: pool
+    icon: cloud-lock-outline
+    source:
+      uri: https://github.com/cloudfoundry/capi-ci-private.git
+      branch: ari-bbl-env-pool
+      pool: elsa-ha
+      username: ((ari-wg-gitbot-username))
+      password: ((ari-wg-gitbot-token))
+
+jobs:
+  - name: elsa-ha-acquire-pool
+    serial: true
+    serial_groups:
+      - elsa-certificate-rotation
+    plan:
+      - in_parallel:
+          - get: monthly
+            trigger: true
+          - put: elsa-ha-pool
+            params:
+              acquire: true
+        timeout: 4h
+
+  - name: elsa-rotate-step-1
+    serial: true
+    serial_groups:
+      - elsa-certificate-rotation
+    plan:
+      - in_parallel:
+          - get: elsa-ha-pool
+            trigger: true
+          - get: capi-ci
+          - get: elsa-ha-bbl-state
+      - task: rotate-step-1
+        file: capi-ci/ci/rotate-certs/step_1.yml
+
+  - name: elsa-redeploy # TODO use yaml anchor
+    serial: true
+    serial_groups:
+      - elsa-certificate-rotation
+    plan:
+      - in_parallel:
+          - get: elsa-ha-pool
+            trigger: true
+          - get: cf-deployment-concourse-tasks
+          - get: elsa-ha-bbl-state
+      - task: bosh-deploy-cf
+        file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+        input_mapping:
+          bbl-state: elsa-ha-bbl-state
+        params:
+          BBL_STATE_DIR: elsa-ha/bbl-state
+          BOSH_DEPLOY_ARGS: "--recreate" # or "--force-latest-variables"?
