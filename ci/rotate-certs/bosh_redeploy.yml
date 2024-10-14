@@ -1,0 +1,14 @@
+---
+platform: linux
+image_resource:
+  type: registry-image
+  source:
+    repository: cloudfoundry/capi
+    tag: runtime-ci
+inputs:
+  - get: capi-ci
+  - get: bbl-state
+run:
+  path: capi-ci/ci/rotate-certs/bosh_redeploy.sh
+params:
+  BBL_STATE_DIR: ~
