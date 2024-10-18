@@ -108,6 +108,8 @@ Pipeline responsible for managing the development [bosh-lite pool](https://githu
 
 Automatic certificate rotation for the long-lived environments (currently only Elsa). The goal is to prevent certificate expiration. The jobs perform a three-step CA certificate rotation according to the [CredHub CA Rotation documentation](https://github.com/pivotal/credhub-release/blob/main/docs/ca-rotation.md). The list of CA certificates is hard-coded in the [rotate_steps.yml task](./ci/rotate-certs/rotate_steps.yml). When a new CA certificate is added or deleted from cf-deployment, the list needs to be updated. Each job of the pipeline is idempotent and can be retriggered in case of a failure. Note however that the order of the jobs must be preserved in case of manual intervention.
 
+**Note**: Do not make the pipeline "public" in Concourse as the log shows sensitive data!
+
 Should the rotation fail unexpectedly, you can inspect the current certificate state with the CredHub API:
 ```
 credhub curl -p "/api/v1/certificates?name=/elsa-ha/cf/<certificate name>"
