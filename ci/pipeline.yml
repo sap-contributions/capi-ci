@@ -40,6 +40,7 @@ groups:
       - olaf-mysql-destroy-cf
       - scar-psql-destroy-cf
       - bump-ci-passed
+      - generate-release-notes
       - rc-docs-v3
   - name: bump-dependencies
     jobs:
@@ -49,7 +50,6 @@ groups:
   - name: ship-it
     jobs:
       - ship-it
-      - generate-release-notes
       - push-github-release
       - publish-docs-v3
       - merge-capi-release-main
