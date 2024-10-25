@@ -6,6 +6,7 @@ image_resource:
     repository: cloudfoundry/cf-deployment-concourse-tasks
 inputs:
   - name: capi-ci
-  - name: capi-release
+  - name: capi-release-main
+  - name: capi-release-ci-passed
 run:
   path: capi-ci/ci/git/generate_release_notes.sh

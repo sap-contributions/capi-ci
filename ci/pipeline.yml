@@ -40,6 +40,7 @@ groups:
       - olaf-mysql-destroy-cf
       - scar-psql-destroy-cf
       - bump-ci-passed
+      - generate-release-notes
       - rc-docs-v3
   - name: bump-dependencies
     jobs:
@@ -49,7 +50,6 @@ groups:
   - name: ship-it
     jobs:
       - ship-it
-      - generate-release-notes
       - push-github-release
       - publish-docs-v3
       - merge-capi-release-main
@@ -1780,18 +1780,14 @@ jobs:
     serial: true
     plan:
       - in_parallel:
-          - get: capi-release
+          - get: capi-release-main
             resource: capi-release-main
+          - get: capi-release-ci-passed
+            resource: capi-release-ci-passed
             passed:
-              - ship-it
+              - bump-ci-passed
             trigger: true
-          - get: capi-final-releases
-            passed:
-              - ship-it
           - get: capi-ci
-          - get: github-published-release
-            params:
-              globs: []
       - task: generate-release-notes
         file: capi-ci/ci/git/generate_release_notes.yml
   - name: push-github-release
