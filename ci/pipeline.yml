@@ -1781,9 +1781,7 @@ jobs:
     plan:
       - in_parallel:
           - get: capi-release-main
-            resource: capi-release-main
           - get: capi-release-ci-passed
-            resource: capi-release-ci-passed
             passed:
               - bump-ci-passed
             trigger: true
