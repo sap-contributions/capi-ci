@@ -1132,13 +1132,6 @@ jobs:
         params:
           BBL_STATE_DIR: gyro-exp/bbl-state
           IGNORE_ERRORS: true
-      - task: stemcell-upload
-        file: cf-deployment-concourse-tasks/bosh-upload-stemcells/task.yml
-        input_mapping:
-          bbl-state: gyro-exp-bbl-state
-        params:
-          BBL_STATE_DIR: gyro-exp/bbl-state
-          INFRASTRUCTURE: gcp
       - task: upload-capi-release-tarball
         file: capi-ci/ci/bosh/upload_capi_release_tarball.yml
         input_mapping:
