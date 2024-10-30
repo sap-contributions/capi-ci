@@ -52,6 +52,13 @@ See [pipeline.yml](https://github.com/cloudfoundry/capi-ci/blob/main/ci/pipeline
     |          · Database: PostgreSQL                                      |
     |          · Platform: GCP                                             |
     |          · Blobstore: WebDAV                                         |
+    |                                                                      |
+    |  Gyro: used for testing experimental features on GCP / PostgreSQL    |
+    |          · Short-lived                                               |
+    |          . Webserver: Puma                                           |
+    |          · Database: PostgreSQL                                      |
+    |          · Platform: GCP                                             |
+    |          · Blobstore: WebDAV                                         |
     |   ___________________________________________________________________|___
     |  /                                                                      /
     \_/______________________________________________________________________/
