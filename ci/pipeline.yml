@@ -25,20 +25,24 @@ groups:
       - asha-mysql-acquire-pool
       - olaf-mysql-acquire-pool
       - scar-psql-acquire-pool
+      - gyro-exp-acquire-pool
       - elsa-ha-deploy-cf
       - kiki-mig-deploy-cf
       - asha-mysql-deploy-cf
       - olaf-mysql-deploy-cf
       - scar-psql-deploy-cf
+      - gyro-exp-deploy-cf
       - elsa-ha-tests
       - kiki-mig-tests
       - asha-mysql-tests
       - olaf-mysql-tests
       - scar-psql-tests
+      - gyro-exp-tests
       - kiki-mig-destroy-cf
       - asha-mysql-destroy-cf
       - olaf-mysql-destroy-cf
       - scar-psql-destroy-cf
+      - gyro-exp-destroy-cf
       - bump-ci-passed
       - generate-release-notes
       - rc-docs-v3
@@ -63,11 +67,13 @@ groups:
       - asha-mysql-acquire-bbl-up-pool
       - olaf-mysql-acquire-bbl-up-pool
       - scar-psql-acquire-bbl-up-pool
+      - gyro-exp-acquire-bbl-up-pool
       - bbl-up-elsa-ha
       - bbl-up-kiki-mig
       - bbl-up-asha-mysql
       - bbl-up-olaf-mysql
       - bbl-up-scar-psql
+      - bbl-up-gyro-exp
   - name: bbl-destroy
     jobs:
       - elsa-ha-release-pool-manual
@@ -75,11 +81,13 @@ groups:
       - asha-mysql-release-pool-manual
       - olaf-mysql-release-pool-manual
       - scar-psql-release-pool-manual
+      - gyro-exp-release-pool-manual
       - emergency-bbl-destroy-elsa-ha
       - manual-bbl-destroy-kiki-mig
       - manual-bbl-destroy-asha-mysql
       - manual-bbl-destroy-olaf-mysql
       - manual-bbl-destroy-scar-psql
+      - manual-bbl-destroy-gyro-exp
 resource_types:
   - name: gcs-resource
     type: registry-image
@@ -437,6 +445,32 @@ resources:
       pool: scar-psql
       username: ((ari-wg-gitbot-username))
       password: ((ari-wg-gitbot-token))
+  # Gyro resources
+  - name: gyro-exp-bbl-state
+    type: git
+    icon: git
+    source:
+      uri: https://github.com/cloudfoundry/capi-ci-private.git
+      branch: main
+      username: ((ari-wg-gitbot-username))
+      password: ((ari-wg-gitbot-token))
+  - name: gyro-exp-integration-configs
+    type: git
+    icon: git
+    source:
+      uri: https://github.com/cloudfoundry/capi-ci-private.git
+      branch: main
+      username: ((ari-wg-gitbot-username))
+      password: ((ari-wg-gitbot-token))
+  - name: gyro-exp-pool
+    type: pool
+    icon: cloud-lock-outline
+    source:
+      uri: https://github.com/cloudfoundry/capi-ci-private.git
+      branch: ari-bbl-env-pool
+      pool: gyro-exp
+      username: ((ari-wg-gitbot-username))
+      password: ((ari-wg-gitbot-token))
 jobs:
   - name: verify-capi-release-commits
     plan:
@@ -644,6 +678,24 @@ jobs:
             passed:
               - create-release-candidate
           - put: scar-psql-pool
+            params:
+              acquire: true
+        timeout: 4h
+  - name: gyro-exp-acquire-pool
+    serial: true
+    plan:
+      - in_parallel:
+          - get: capi-release
+            resource: capi-release-develop
+            passed:
+              - create-release-candidate
+            trigger: true
+            params:
+              submodules: none
+          - get: capi-release-tarball
+            passed:
+              - create-release-candidate
+          - put: gyro-exp-pool
             params:
               acquire: true
         timeout: 4h
@@ -1053,6 +1105,80 @@ jobs:
           cats-integration-config: scar-psql-integration-configs
         params:
           CONFIG_FILE_PATH: scar-psql/cats_integration_config.json
+  - name: gyro-exp-deploy-cf
+    serial: true
+    plan:
+      - in_parallel:
+          - get: capi-release
+            resource: capi-release-develop
+            passed:
+              - gyro-exp-acquire-pool
+            trigger: true
+            params:
+              submodules: none
+          - get: capi-release-tarball
+            passed:
+              - gyro-exp-acquire-pool
+          - get: cf-deployment-concourse-tasks
+          - get: gyro-exp-bbl-state
+          - get: cf-deployment
+          - get: capi-ci
+          - get: runtime-ci
+          - get: gyro-exp-integration-configs
+      - task: delete-deployment
+        file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+        input_mapping:
+          bbl-state: gyro-exp-bbl-state
+        params:
+          BBL_STATE_DIR: gyro-exp/bbl-state
+          IGNORE_ERRORS: true
+      - task: upload-capi-release-tarball
+        file: capi-ci/ci/bosh/upload_capi_release_tarball.yml
+        input_mapping:
+          bbl-state: gyro-exp-bbl-state
+          release-tarball: capi-release-tarball
+        params:
+          BBL_STATE_DIR: gyro-exp/bbl-state
+      - task: collect-ops-files
+        file: cf-deployment-concourse-tasks/collect-ops-files/task.yml
+        input_mapping:
+          base-ops-files: cf-deployment
+          new-ops-files: capi-ci
+        params:
+          NEW_OPS_FILES: |
+            cf-deployment-operations/use-latest-capi.yml
+            cf-deployment-operations/scale-up-cells.yml
+            cf-deployment-operations/scale-generic-worker-processes.yml
+            cf-deployment-operations/disable-uaa-get-requests.yml
+            cf-deployment-operations/seed-credhub-asg.yml
+            cf-deployment-operations/seed-uaa-asg.yml
+      - task: deploy
+        file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+        input_mapping:
+          bbl-state: gyro-exp-bbl-state
+          ops-files: collected-ops-files
+          vars-files: gyro-exp-bbl-state
+        params:
+          BBL_STATE_DIR: gyro-exp/bbl-state
+          SYSTEM_DOMAIN: &gyro-exp-domain cf.gyro.app-runtime-interfaces.ci.cloudfoundry.org
+          OPS_FILES: |
+            base-ops-files/operations/use-compiled-releases.yml
+            base-ops-files/operations/use-postgres.yml
+            use-latest-capi.yml
+            scale-up-cells.yml
+            scale-generic-worker-processes.yml
+            disable-uaa-get-requests.yml
+            seed-credhub-asg.yml
+            base-ops-files/operations/test/speed-up-dynamic-asgs.yml
+            seed-uaa-asg.yml
+            enable-experimental-features.yml
+      - task: ensure-api-healthy
+        file: runtime-ci/tasks/ensure-api-healthy/task.yml
+        input_mapping:
+          cats-integration-config: gyro-exp-integration-configs
+        params:
+          CONFIG_FILE_PATH: gyro-exp/cats_integration_config.json
+
   - name: elsa-ha-tests
     serial: true
     plan:
@@ -1535,6 +1661,99 @@ jobs:
               USE_CREDHUB: true
               RUN_REVISIONS_TESTS: true
               FLAKE_ATTEMPTS: 2
+  - name: gyro-exp-tests
+    serial: true
+    plan:
+      - in_parallel:
+          - get: capi-release
+            resource: capi-release-develop
+            passed:
+              - gyro-exp-deploy-cf
+            trigger: true
+            params:
+              submodules: none
+          - get: capi-release-tarball
+            passed:
+              - gyro-exp-deploy-cf
+          - get: cf-deployment-concourse-tasks
+          - get: gyro-exp-integration-configs
+          - get: gyro-exp-bbl-state
+          - get: cf-acceptance-tests
+          - get: capi-ci
+          - get: capi-bara-tests
+          - get: sync-integration-tests
+      - task: updated-integration-configs
+        file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+        input_mapping:
+          bbl-state: gyro-exp-bbl-state
+          integration-configs: gyro-exp-integration-configs
+        params:
+          CATS_INTEGRATION_CONFIG_FILE: gyro-exp/cats_integration_config.json
+          BBL_STATE_DIR: gyro-exp/bbl-state
+          SYSTEM_DOMAIN: *gyro-exp-domain
+        ensure:
+          put: gyro-exp-integration-configs
+          params:
+            repository: updated-integration-configs
+            rebase: true
+      - task: updated-baras-integration-configs
+        file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
+        input_mapping:
+          bbl-state: gyro-exp-bbl-state
+          integration-configs: updated-integration-configs
+        params:
+          CATS_INTEGRATION_CONFIG_FILE: gyro-exp/baras_integration_config.json
+          BBL_STATE_DIR: gyro-exp/bbl-state
+          SYSTEM_DOMAIN: *gyro-exp-domain
+        ensure:
+          put: gyro-exp-integration-configs
+          params:
+            repository: updated-integration-configs
+            rebase: true
+      - task: enable-feature-flags
+        file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
+        input_mapping:
+          bbl-state: gyro-exp-bbl-state
+        params:
+          SYSTEM_DOMAIN: *gyro-exp-domain
+          BBL_STATE_DIR: gyro-exp/bbl-state
+          # TODO enable anything else?
+          ENABLED_FEATURE_FLAGS: diego_docker diego_cnb service_instance_sharing route_sharing
+      - in_parallel:
+          - task: acceptance-tests
+            attempts: 3
+            file: cf-deployment-concourse-tasks/run-cats/task.yml
+            input_mapping:
+              integration-config: updated-integration-configs
+            params:
+              NODES: 10
+              CONFIG_FILE_PATH: gyro-exp/cats_integration_config.json
+              CAPTURE_LOGS: true
+              SKIP_REGEXP: "(shows logs and metrics)|(appropriately handles certain reserved\\/unsafe characters)"
+          - task: capi-bara-tests
+            attempts: 3
+            file: capi-ci/ci/baras/run-baras.yml
+            input_mapping:
+              integration-config: updated-integration-configs
+            params:
+              NODES: 6
+              FLAKE_ATTEMPTS: 2
+              CONFIG_FILE_PATH: gyro-exp/baras_integration_config.json
+          - task: sync-integration-tests
+            attempts: 3
+            file: sync-integration-tests/concourse/task_with_credhub.yml
+            input_mapping:
+              environment: updated-integration-configs
+            params:
+              BOSH_DEPLOYMENT_NAME: cf
+              BOSH_API_INSTANCE: api/0
+              CF_API_TARGET: https://api.cf.gyro.app-runtime-interfaces.ci.cloudfoundry.org
+              CF_SKIP_SSL_VALIDATION: false
+              CF_APPS_DOMAIN: *gyro-exp-domain
+              BBL_STATE_DIR: gyro-exp/bbl-state
+              USE_CREDHUB: true
+              RUN_REVISIONS_TESTS: true
+              FLAKE_ATTEMPTS: 2
   - name: kiki-mig-destroy-cf
     serial: true
     plan:
@@ -1643,6 +1862,33 @@ jobs:
       - put: scar-psql-pool
         params:
           release: scar-psql-pool
+  - name: gyro-exp-destroy-cf
+    serial: true
+    plan:
+      - in_parallel:
+          - get: capi-release
+            resource: capi-release-develop
+            passed:
+              - gyro-exp-tests
+            trigger: true
+            params:
+              submodules: none
+          - get: capi-release-tarball
+            passed:
+              - gyro-exp-tests
+          - get: cf-deployment-concourse-tasks
+          - get: gyro-exp-bbl-state
+          - get: gyro-exp-pool
+      - task: delete-deployment
+        file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+        input_mapping:
+          bbl-state: gyro-exp-bbl-state
+        params:
+          BBL_STATE_DIR: gyro-exp/bbl-state
+          IGNORE_ERRORS: true
+      - put: gyro-exp-pool
+        params:
+          release: gyro-exp-pool
   - name: bump-ci-passed
     serial: true
     plan:
@@ -1655,6 +1901,7 @@ jobs:
               - asha-mysql-destroy-cf
               - olaf-mysql-destroy-cf
               - scar-psql-destroy-cf
+              # TODO add gyro when ready
             trigger: true
             params:
               submodules: none
@@ -1947,6 +2194,16 @@ jobs:
             params:
               acquire: true
         timeout: 4h
+  - name: gyro-exp-acquire-bbl-up-pool
+    serial: true
+    plan:
+      - in_parallel:
+          - get: nightly
+            trigger: true
+          - put: gyro-exp-pool
+            params:
+              acquire: true
+        timeout: 4h
   - name: bbl-up-elsa-ha
     serial: true
     plan:
@@ -2199,6 +2456,56 @@ jobs:
       - put: scar-psql-pool
         params:
           release: scar-psql-pool
+  - name: bbl-up-gyro-exp
+    serial: true
+    plan:
+      - in_parallel:
+          - get: gyro-exp-pool
+            passed:
+              - gyro-exp-acquire-bbl-up-pool
+            trigger: true
+          - get: cf-deployment-concourse-tasks
+          - get: gyro-exp-bbl-state
+          - get: capi-ci
+      - task: bbl-up-gyro-exp
+        file: cf-deployment-concourse-tasks/bbl-up/task.yml
+        input_mapping:
+          bbl-state: gyro-exp-bbl-state
+          bbl-config: gyro-exp-bbl-state
+        params:
+          BBL_STATE_DIR: gyro-exp/bbl-state
+          BBL_ENV_NAME: gyro-exp
+          BBL_IAAS: gcp
+          BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-gyro-exp-service-account))
+          BBL_GCP_REGION: europe-west3
+          BBL_LB_CERT: ((gyro_lb.certificate))
+          BBL_LB_KEY: ((gyro_lb.private_key))
+          LB_DOMAIN: *gyro-exp-domain
+        ensure:
+          put: gyro-exp-bbl-state
+          params:
+            repository: updated-bbl-state
+            rebase: true
+      - task: create-dns-record
+        attempts: 3
+        file: capi-ci/ci/bbl-tasks/create_dns_record.yml
+        input_mapping:
+          bbl-state: updated-bbl-state
+        params:
+          BBL_STATE_DIR: gyro-exp/bbl-state
+          DNS_DOMAIN: *gyro-exp-domain
+          SHARED_DNS_ZONE_NAME: app-runtime-interfaces
+          GCP_DNS_SERVICE_ACCOUNT_KEY: ((capi-bbl-dns-service-account))
+          GCP_PROJECT_ID: app-runtime-interfaces-wg
+      - task: run-bosh-cleanup
+        file: capi-ci/ci/bbl-tasks/run_bosh_cleanup.yml
+        input_mapping:
+          bbl-state: updated-bbl-state
+        params:
+          BBL_STATE_DIR: gyro-exp/bbl-state
+      - put: gyro-exp-pool
+        params:
+          release: gyro-exp-pool
   - name: elsa-ha-release-pool-manual
     serial: true
     plan:
@@ -2244,6 +2551,15 @@ jobs:
         put: scar-psql-pool
         params:
           release: scar-psql-pool
+  - name: gyro-exp-release-pool-manual
+    serial: true
+    plan:
+      - get: gyro-exp-pool
+    ensure:
+      try:
+        put: gyro-exp-pool
+        params:
+          release: gyro-exp-pool
   - name: emergency-bbl-destroy-elsa-ha
     serial: true
     plan:
@@ -2340,6 +2656,24 @@ jobs:
           BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-scar-service-account))
         ensure:
           put: scar-psql-bbl-state
+          params:
+            repository: updated-bbl-state
+            rebase: true
+  - name: manual-bbl-destroy-gyro-exp
+    serial: true
+    plan:
+      - in_parallel:
+          - get: cf-deployment-concourse-tasks
+          - get: gyro-exp-bbl-state
+      - task: manual-bbl-destroy-gyro-exp
+        file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
+        input_mapping:
+          bbl-state: gyro-exp-bbl-state
+        params:
+          BBL_STATE_DIR: gyro-exp/bbl-state
+          BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-gyro-exp-service-account))
+        ensure:
+          put: gyro-exp-bbl-state
           params:
             repository: updated-bbl-state
             rebase: true
