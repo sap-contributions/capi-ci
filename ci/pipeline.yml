@@ -568,8 +568,6 @@ jobs:
               - bridge-unit-tests
             trigger: true
           - get: blobstore_url_signer
-            passed:
-              - bridge-unit-tests
             trigger: true
           - get: capi-ci
       - task: bump-capi-release
