@@ -20,6 +20,10 @@ params:
   # - Optional
   # - Path to the BARAs integration configuration file.
   # - The path is relative to the `integration-config` input.
+  LABEL_FILTER: ~
+  # - Optional
+  # - Can be used to specify a Ginkgo label filter query (e.g. "!v2_api" to exclude tests with that label)
+  # - The filter is empty by default so that Ginkgo includes all tests.
   CONFIG_FILE_PATH: integration_config.json
   # Optional
   # This is the Google Cloud project name.

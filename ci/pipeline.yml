@@ -1750,6 +1750,7 @@ jobs:
               NODES: 6
               FLAKE_ATTEMPTS: 2
               CONFIG_FILE_PATH: gyro-exp/baras_integration_config.json
+              LABEL_FILTER: "!v2_api"
           - task: sync-integration-tests
             attempts: 3
             file: sync-integration-tests/concourse/task_with_credhub.yml

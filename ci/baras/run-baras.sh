@@ -36,4 +36,5 @@ export CF_PLUGIN_HOME=$HOME
   --flake-attempts="${FLAKE_ATTEMPTS}" \
   -nodes="${NODES}" \
   -timeout=2h \
+  --label-filter="${LABEL_FILTER}" \
   .
