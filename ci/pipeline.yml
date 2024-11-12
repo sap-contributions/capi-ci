@@ -1913,7 +1913,7 @@ jobs:
               - asha-mysql-destroy-cf
               - olaf-mysql-destroy-cf
               - scar-psql-destroy-cf
-              # TODO add gyro when ready
+              - gyro-exp-destroy-cf
             trigger: true
             params:
               submodules: none
