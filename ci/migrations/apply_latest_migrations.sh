@@ -32,7 +32,7 @@ upload_capi_release_tarball() {
 unpack_capi_release_tarball() {
   echo "Unpacking capi-release tarball..."
   bosh ssh -d "${BOSH_DEPLOYMENT_NAME}" "${BOSH_API_INSTANCE}" \
-    "cd /tmp; tar -xzf ${CAPI_REL_TGZ} packages/cloud_controller_ng.tgz; cd packages; tar -xzf cloud_controller_ng.tgz"
+    "cd /tmp; tar -xzf ${CAPI_REL_TGZ} ./packages/cloud_controller_ng.tgz; cd packages; tar -xzf cloud_controller_ng.tgz"
 }
 
 copy_db_migrations() {
