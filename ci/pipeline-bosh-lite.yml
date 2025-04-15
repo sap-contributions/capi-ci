@@ -245,7 +245,7 @@ jobs:
         input_mapping:
           env-pool: pool-repo
         params:
-          MIN_UNCLAIMED_COUNT: 4
+          MIN_UNCLAIMED_COUNT: 1
           GIT_USERNAME: ((ari-wg-gitbot-username))
           GIT_EMAIL: ((ari-wg-gitbot-email))
       - put: pool-repo
