@@ -83,7 +83,7 @@ groups:
       - olaf-mysql-release-pool-manual
       - scar-psql-release-pool-manual
       - gyro-exp-release-pool-manual
-      - emergency-bbl-destroy-elsa-ha
+      - manual-bbl-destroy-elsa-ha
       - manual-bbl-destroy-kiki-mig
       - manual-bbl-destroy-asha-mysql
       - manual-bbl-destroy-olaf-mysql
@@ -2632,21 +2632,13 @@ jobs:
         put: gyro-exp-pool
         params:
           release: gyro-exp-pool
-  - name: emergency-bbl-destroy-elsa-ha
+  - name: manual-bbl-destroy-elsa-ha
     serial: true
     plan:
       - in_parallel:
           - get: cf-deployment-concourse-tasks
           - get: elsa-ha-bbl-state
-      - try:
-          task: delete-deployment
-          file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
-          input_mapping:
-            bbl-state: elsa-ha-bbl-state
-          params:
-            BBL_STATE_DIR: elsa-ha/bbl-state
-            IGNORE_ERRORS: true
-      - task: emergency-bbl-destroy-elsa-ha
+      - task: manual-bbl-destroy-elsa-ha
         file: cf-deployment-concourse-tasks/bbl-destroy/task.yml
         input_mapping:
           bbl-state: elsa-ha-bbl-state
