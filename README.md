@@ -10,6 +10,7 @@ Check it out! https://concourse.app-runtime-interfaces.ci.cloudfoundry.org/teams
 
 See [pipeline.yml](https://github.com/cloudfoundry/capi-ci/blob/main/ci/pipeline.yml) for more details.
 
+The webserver is now "Puma" for all environments.
 ```
    ________________________________________________________________________
  / \                                                                       \
@@ -20,42 +21,36 @@ See [pipeline.yml](https://github.com/cloudfoundry/capi-ci/blob/main/ci/pipeline
     |          · Encrypted database                                        |
     |          · Clustered database                                        |
     |          · Runtime CredHub (assisted mode)                           |
-    |          . Webserver: Thin                                           |
     |          · Database: MySQL                                           |
     |          · Platform: GCP                                             |
     |          · Blobstore: GCP blobstore                                  |
     |                                                                      |
     |  Kiki: used for testing that db migrations are backwards compatible  |
     |          · Short-lived                                               |
-    |          . Webserver: Thin                                           |
     |          · Database: PostgreSQL                                      |
     |          · Platform: GCP                                             |
     |          · Blobstore: WebDAV                                         |
     |                                                                      |
-    |  Asha: used for testing CATS and CAPI-BARA tests on MySQL with Puma  |
+    |  Asha: used for testing CATS and CAPI-BARA tests on MySQL            |
     |          · Short-lived                                               |
-    |          . Webserver: Puma
     |          · Database: MySQL                                           |
     |          · Platform: GCP                                             |
     |          · Blobstore: WebDAV                                         |
     |                                                                      |
     |  Olaf: used for running CATS and CAPI-BARA tests on AWS with MySQL   |
     |          · Short-lived                                               |
-    |          . Webserver: Thin                                           |
     |          · Database: MySQL                                           |
     |          · Platform: AWS                                             |
     |          · Blobstore: S3                                             |
     |                                                                      |
     |  Scar: used for testing CATS and CAPI-BARA tests on PostgreSQL       |
     |          · Short-lived                                               |
-    |          . Webserver: Thin                                           |
     |          · Database: PostgreSQL                                      |
     |          · Platform: GCP                                             |
     |          · Blobstore: WebDAV                                         |
     |                                                                      |
     |  Gyro: used for testing experimental features on GCP / PostgreSQL    |
     |          · Short-lived                                               |
-    |          . Webserver: Puma                                           |
     |          · Database: PostgreSQL                                      |
     |          · Platform: GCP                                             |
     |          · Blobstore: WebDAV                                         |
