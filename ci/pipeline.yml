@@ -952,7 +952,6 @@ jobs:
             cf-deployment-operations/disable-uaa-get-requests.yml
             cf-deployment-operations/seed-credhub-asg.yml
             cf-deployment-operations/seed-uaa-asg.yml
-            cf-deployment-operations/enable-puma.yml
       - task: deploy
         file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
         input_mapping:
@@ -973,7 +972,6 @@ jobs:
             base-ops-files/operations/scale-database-cluster.yml
             base-ops-files/operations/test/speed-up-dynamic-asgs.yml
             seed-uaa-asg.yml
-            enable-puma.yml
       - task: ensure-api-healthy
         file: runtime-ci/tasks/ensure-api-healthy/task.yml
         input_mapping:

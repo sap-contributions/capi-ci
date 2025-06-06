@@ -1,4 +1,10 @@
 ---
 - type: replace
+  path: /instance_groups/name=cc-worker/instances
+  value: 1
+- type: replace
   path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc?/jobs?/generic?/number_of_workers?
+  value: 2
+- type: replace
+  path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc?/jobs?/generic?/number_of_worker_threads?
   value: 2
