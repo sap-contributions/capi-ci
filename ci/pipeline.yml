@@ -1325,9 +1325,6 @@ jobs:
           capi-ci-private: elsa-ha-bbl-state
         params:
           BBL_STATE_DIR: elsa-ha/bbl-state
-      - put: elsa-ha-pool
-        params:
-          release: elsa-ha-pool
   - name: kiki-mig-tests
     serial: true
     plan:
