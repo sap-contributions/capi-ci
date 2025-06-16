@@ -786,6 +786,7 @@ jobs:
             cf-deployment-operations/seed-uaa-asg.yml
             cf-deployment-operations/disable-skip-cert-verify.yml
             cf-deployment-operations/disable-skip-cert-verify-iso-seg.yml
+            cf-deployment-operations/tag-bbl-env.yml
       - task: deploy
         file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
         input_mapping:
@@ -795,6 +796,8 @@ jobs:
         params:
           BBL_STATE_DIR: elsa-ha/bbl-state
           SYSTEM_DOMAIN: &elsa-ha-domain cf.elsa.app-runtime-interfaces.ci.cloudfoundry.org
+          BOSH_DEPLOY_ARGS: |
+            --var bbl_env_name=elsa-ha
           OPS_FILES: |
             base-ops-files/operations/add-persistent-isolation-segment-diego-cell.yml
             base-ops-files/operations/windows2019-cell.yml
@@ -813,6 +816,7 @@ jobs:
             seed-uaa-asg.yml
             disable-skip-cert-verify.yml
             disable-skip-cert-verify-iso-seg.yml
+            tag-bbl-env.yml
           VARS_FILES: |
             elsa-ha/gcs-storage-vars.yml
       - task: ensure-api-healthy
@@ -867,6 +871,7 @@ jobs:
             cf-deployment-operations/seed-credhub-asg.yml
             cf-deployment-operations/seed-uaa-asg.yml
             cf-deployment-operations/log-all-sequel-activity.yml
+            cf-deployment-operations/tag-bbl-env.yml
       - task: deploy
         file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
         input_mapping:
@@ -876,6 +881,8 @@ jobs:
         params:
           BBL_STATE_DIR: kiki-mig/bbl-state
           SYSTEM_DOMAIN: &kiki-domain cf.kiki.app-runtime-interfaces.ci.cloudfoundry.org
+          BOSH_DEPLOY_ARGS: |
+            --var bbl_env_name=kiki-mig
           OPS_FILES: |
             base-ops-files/operations/add-persistent-isolation-segment-diego-cell.yml
             base-ops-files/operations/use-compiled-releases.yml
@@ -887,6 +894,7 @@ jobs:
             base-ops-files/operations/test/speed-up-dynamic-asgs.yml
             seed-uaa-asg.yml
             log-all-sequel-activity.yml
+            tag-bbl-env.yml
       - task: ensure-api-healthy
         file: runtime-ci/tasks/ensure-api-healthy/task.yml
         input_mapping:
@@ -952,6 +960,7 @@ jobs:
             cf-deployment-operations/disable-uaa-get-requests.yml
             cf-deployment-operations/seed-credhub-asg.yml
             cf-deployment-operations/seed-uaa-asg.yml
+            cf-deployment-operations/tag-bbl-env.yml
       - task: deploy
         file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
         input_mapping:
@@ -961,6 +970,8 @@ jobs:
         params:
           BBL_STATE_DIR: asha-mysql/bbl-state
           SYSTEM_DOMAIN: &asha-mysql-domain cf.asha.app-runtime-interfaces.ci.cloudfoundry.org
+          BOSH_DEPLOY_ARGS: |
+            --var bbl_env_name=asha-mysql
           OPS_FILES: |
             base-ops-files/operations/add-persistent-isolation-segment-diego-cell.yml
             base-ops-files/operations/use-compiled-releases.yml
@@ -972,6 +983,7 @@ jobs:
             base-ops-files/operations/scale-database-cluster.yml
             base-ops-files/operations/test/speed-up-dynamic-asgs.yml
             seed-uaa-asg.yml
+            tag-bbl-env.yml
       - task: ensure-api-healthy
         file: runtime-ci/tasks/ensure-api-healthy/task.yml
         input_mapping:
@@ -1032,6 +1044,7 @@ jobs:
             cf-deployment-operations/disable-uaa-get-requests.yml
             cf-deployment-operations/seed-credhub-asg.yml
             cf-deployment-operations/seed-uaa-asg.yml
+            cf-deployment-operations/tag-bbl-env.yml
       - task: deploy
         file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
         input_mapping:
@@ -1041,6 +1054,8 @@ jobs:
         params:
           BBL_STATE_DIR: olaf-mysql/bbl-state
           SYSTEM_DOMAIN: &olaf-mysql-domain cf.olaf.app-runtime-interfaces.ci.cloudfoundry.org
+          BOSH_DEPLOY_ARGS: |
+            --var bbl_env_name=olaf-mysql
           OPS_FILES: |
             base-ops-files/operations/add-persistent-isolation-segment-diego-cell.yml
             base-ops-files/operations/aws.yml
@@ -1055,6 +1070,7 @@ jobs:
             base-ops-files/operations/scale-database-cluster.yml
             base-ops-files/operations/test/speed-up-dynamic-asgs.yml
             seed-uaa-asg.yml
+            tag-bbl-env.yml
           VARS_FILES: |
             olaf-mysql/bbl-state/vars/director-vars-file.yml
       - task: ensure-api-healthy
@@ -1116,6 +1132,7 @@ jobs:
             cf-deployment-operations/disable-uaa-get-requests.yml
             cf-deployment-operations/seed-credhub-asg.yml
             cf-deployment-operations/seed-uaa-asg.yml
+            cf-deployment-operations/tag-bbl-env.yml
       - task: deploy
         file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
         input_mapping:
@@ -1125,6 +1142,8 @@ jobs:
         params:
           BBL_STATE_DIR: scar-psql/bbl-state
           SYSTEM_DOMAIN: &scar-psql-domain cf.scar.app-runtime-interfaces.ci.cloudfoundry.org
+          BOSH_DEPLOY_ARGS: |
+            --var bbl_env_name=scar-psql
           OPS_FILES: |
             base-ops-files/operations/add-persistent-isolation-segment-diego-cell.yml
             base-ops-files/operations/use-compiled-releases.yml
@@ -1136,6 +1155,7 @@ jobs:
             seed-credhub-asg.yml
             base-ops-files/operations/test/speed-up-dynamic-asgs.yml
             seed-uaa-asg.yml
+            tag-bbl-env.yml
       - task: ensure-api-healthy
         file: runtime-ci/tasks/ensure-api-healthy/task.yml
         input_mapping:
@@ -1190,6 +1210,7 @@ jobs:
             cf-deployment-operations/seed-credhub-asg.yml
             cf-deployment-operations/seed-uaa-asg.yml
             cf-deployment-operations/enable-experimental-features.yml
+            cf-deployment-operations/tag-bbl-env.yml
       - task: deploy
         file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
         input_mapping:
@@ -1199,6 +1220,8 @@ jobs:
         params:
           BBL_STATE_DIR: gyro-exp/bbl-state
           SYSTEM_DOMAIN: &gyro-exp-domain cf.gyro.app-runtime-interfaces.ci.cloudfoundry.org
+          BOSH_DEPLOY_ARGS: |
+            --var bbl_env_name=gyro-exp
           OPS_FILES: |
             base-ops-files/operations/use-compiled-releases.yml
             base-ops-files/operations/use-postgres.yml
@@ -1212,6 +1235,7 @@ jobs:
             base-ops-files/operations/enable-cc-worker-metrics.yml
             seed-uaa-asg.yml
             enable-experimental-features.yml
+            tag-bbl-env.yml
       - task: ensure-api-healthy
         file: runtime-ci/tasks/ensure-api-healthy/task.yml
         input_mapping:

@@ -1,0 +1,4 @@
+- type: replace
+  path: /tags?
+  value:
+    environment: ((bbl_env_name))
