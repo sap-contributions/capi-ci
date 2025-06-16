@@ -2444,7 +2444,7 @@ jobs:
           BBL_IAAS: aws
           BBL_AWS_ACCESS_KEY_ID: ((capi-bbl-olaf-aws-access-key))
           BBL_AWS_SECRET_ACCESS_KEY: ((capi-bbl-olaf-aws-secret-key))
-          BBL_AWS_REGION: eu-central-1
+          BBL_AWS_REGION: us-east-1
           BBL_LB_CERT: ((olaf_lb.certificate))
           BBL_LB_KEY: ((olaf_lb.private_key))
           LB_DOMAIN: *olaf-mysql-domain
