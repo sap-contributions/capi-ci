@@ -2396,7 +2396,7 @@ jobs:
           BBL_ENV_NAME: asha-mysql
           BBL_IAAS: gcp
           BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-asha-service-account))
-          BBL_GCP_REGION: europe-west3
+          BBL_GCP_REGION: us-east1
           BBL_LB_CERT: ((asha_lb.certificate))
           BBL_LB_KEY: ((asha_lb.private_key))
           LB_DOMAIN: *asha-mysql-domain
@@ -2447,7 +2447,7 @@ jobs:
           BBL_IAAS: aws
           BBL_AWS_ACCESS_KEY_ID: ((capi-bbl-olaf-aws-access-key))
           BBL_AWS_SECRET_ACCESS_KEY: ((capi-bbl-olaf-aws-secret-key))
-          BBL_AWS_REGION: eu-central-1
+          BBL_AWS_REGION: us-east-1
           BBL_LB_CERT: ((olaf_lb.certificate))
           BBL_LB_KEY: ((olaf_lb.private_key))
           LB_DOMAIN: *olaf-mysql-domain
@@ -2497,7 +2497,7 @@ jobs:
           BBL_ENV_NAME: scar-psql
           BBL_IAAS: gcp
           BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-scar-service-account))
-          BBL_GCP_REGION: europe-west3
+          BBL_GCP_REGION: us-east1
           BBL_LB_CERT: ((scar_lb.certificate))
           BBL_LB_KEY: ((scar_lb.private_key))
           LB_DOMAIN: *scar-psql-domain
@@ -2547,7 +2547,7 @@ jobs:
           BBL_ENV_NAME: gyro-exp
           BBL_IAAS: gcp
           BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-gyro-exp-service-account))
-          BBL_GCP_REGION: europe-west3
+          BBL_GCP_REGION: us-east1
           BBL_LB_CERT: ((gyro_lb.certificate))
           BBL_LB_KEY: ((gyro_lb.private_key))
           LB_DOMAIN: *gyro-exp-domain
