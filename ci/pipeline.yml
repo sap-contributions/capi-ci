@@ -38,12 +38,6 @@ groups:
       - olaf-mysql-tests
       - scar-psql-tests
       - gyro-exp-tests
-      - elsa-ha-destroy-cf
-      - kiki-mig-destroy-cf
-      - asha-mysql-destroy-cf
-      - olaf-mysql-destroy-cf
-      - scar-psql-destroy-cf
-      - gyro-exp-destroy-cf
       - bump-ci-passed
       - generate-release-notes
       - rc-docs-v3
@@ -1221,7 +1215,6 @@ jobs:
           cats-integration-config: gyro-exp-integration-configs
         params:
           CONFIG_FILE_PATH: gyro-exp/cats_integration_config.json
-
   - name: elsa-ha-tests
     serial: true
     plan:
@@ -1287,7 +1280,8 @@ jobs:
         params:
           BBL_STATE_DIR: elsa-ha/bbl-state
           CF_API_TARGET: &elsa-ha-api-url https://api.cf.elsa.app-runtime-interfaces.ci.cloudfoundry.org
-      - in_parallel:
+      - do:
+        - in_parallel:
           - task: acceptance-tests
             attempts: 3
             file: cf-deployment-concourse-tasks/run-cats/task.yml
@@ -1322,12 +1316,24 @@ jobs:
               USE_CREDHUB: true
               RUN_REVISIONS_TESTS: true
               FLAKE_ATTEMPTS: 2
-      - task: run-blobstore-benchmarks
-        file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
-        input_mapping:
-          capi-ci-private: elsa-ha-bbl-state
-        params:
-          BBL_STATE_DIR: elsa-ha/bbl-state
+        - task: run-blobstore-benchmarks
+          file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
+          input_mapping:
+            capi-ci-private: elsa-ha-bbl-state
+          params:
+            BBL_STATE_DIR: elsa-ha/bbl-state
+        ensure:
+          do:
+            - task: delete-deployment
+              file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+              input_mapping:
+                bbl-state: elsa-ha-bbl-state
+              params:
+                BBL_STATE_DIR: elsa-ha/bbl-state
+                IGNORE_ERRORS: true
+            - put: elsa-ha-pool
+              params:
+                release: elsa-ha-pool
   - name: kiki-mig-tests
     serial: true
     plan:
@@ -1388,41 +1394,54 @@ jobs:
           SYSTEM_DOMAIN: *kiki-domain
           BBL_STATE_DIR: kiki-mig/bbl-state
           ENABLED_FEATURE_FLAGS: diego_docker diego_cnb service_instance_sharing route_sharing
-      - in_parallel:
-          - task: acceptance-tests
-            attempts: 3
-            file: cf-deployment-concourse-tasks/run-cats/task.yml
-            input_mapping:
-              integration-config: updated-integration-configs
-            params:
-              NODES: 10
-              CONFIG_FILE_PATH: kiki-mig/cats_integration_config.json
-              CAPTURE_LOGS: true
-              SKIP_REGEXP: "(shows logs and metrics)|(appropriately handles certain reserved\\/unsafe characters)"
-          - task: capi-bara-tests
-            attempts: 3
-            file: capi-ci/ci/baras/run-baras.yml
-            input_mapping:
-              integration-config: updated-integration-configs
-            params:
-              NODES: 6
-              FLAKE_ATTEMPTS: 2
-              CONFIG_FILE_PATH: kiki-mig/baras_integration_config.json
-          - task: sync-integration-tests
-            attempts: 3
-            file: sync-integration-tests/concourse/task_with_credhub.yml
-            input_mapping:
-              environment: updated-integration-configs
-            params:
-              BOSH_DEPLOYMENT_NAME: cf
-              BOSH_API_INSTANCE: api/0
-              CF_API_TARGET: https://api.cf.kiki.app-runtime-interfaces.ci.cloudfoundry.org
-              CF_SKIP_SSL_VALIDATION: true
-              CF_APPS_DOMAIN: *kiki-domain
-              BBL_STATE_DIR: kiki-mig/bbl-state
-              USE_CREDHUB: true
-              RUN_REVISIONS_TESTS: true
-              FLAKE_ATTEMPTS: 2
+      - do:
+        - in_parallel:
+            - task: acceptance-tests
+              attempts: 3
+              file: cf-deployment-concourse-tasks/run-cats/task.yml
+              input_mapping:
+                integration-config: updated-integration-configs
+              params:
+                NODES: 10
+                CONFIG_FILE_PATH: kiki-mig/cats_integration_config.json
+                CAPTURE_LOGS: true
+                SKIP_REGEXP: "(shows logs and metrics)|(appropriately handles certain reserved\\/unsafe characters)"
+            - task: capi-bara-tests
+              attempts: 3
+              file: capi-ci/ci/baras/run-baras.yml
+              input_mapping:
+                integration-config: updated-integration-configs
+              params:
+                NODES: 6
+                FLAKE_ATTEMPTS: 2
+                CONFIG_FILE_PATH: kiki-mig/baras_integration_config.json
+            - task: sync-integration-tests
+              attempts: 3
+              file: sync-integration-tests/concourse/task_with_credhub.yml
+              input_mapping:
+                environment: updated-integration-configs
+              params:
+                BOSH_DEPLOYMENT_NAME: cf
+                BOSH_API_INSTANCE: api/0
+                CF_API_TARGET: https://api.cf.kiki.app-runtime-interfaces.ci.cloudfoundry.org
+                CF_SKIP_SSL_VALIDATION: true
+                CF_APPS_DOMAIN: *kiki-domain
+                BBL_STATE_DIR: kiki-mig/bbl-state
+                USE_CREDHUB: true
+                RUN_REVISIONS_TESTS: true
+                FLAKE_ATTEMPTS: 2
+        ensure:
+          do:
+            - task: delete-deployment
+              file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+              input_mapping:
+                bbl-state: kiki-mig-bbl-state
+              params:
+                BBL_STATE_DIR: kiki-mig/bbl-state
+                IGNORE_ERRORS: true
+            - put: kiki-mig-pool
+              params:
+                release: kiki-mig-pool
   - name: asha-mysql-tests
     serial: true
     plan:
@@ -1480,41 +1499,54 @@ jobs:
           SYSTEM_DOMAIN: *asha-mysql-domain
           BBL_STATE_DIR: asha-mysql/bbl-state
           ENABLED_FEATURE_FLAGS: diego_docker diego_cnb service_instance_sharing route_sharing
-      - in_parallel:
-          - task: acceptance-tests
-            attempts: 3
-            file: cf-deployment-concourse-tasks/run-cats/task.yml
+      - do:
+        - in_parallel:
+            - task: acceptance-tests
+              attempts: 3
+              file: cf-deployment-concourse-tasks/run-cats/task.yml
+              input_mapping:
+                integration-config: updated-integration-configs
+              params:
+                NODES: 10
+                CONFIG_FILE_PATH: asha-mysql/cats_integration_config.json
+                CAPTURE_LOGS: true
+                SKIP_REGEXP: "(shows logs and metrics)|(appropriately handles certain reserved\\/unsafe characters)"
+            - task: capi-bara-tests
+              attempts: 3
+              file: capi-ci/ci/baras/run-baras.yml
+              input_mapping:
+                integration-config: updated-integration-configs
+              params:
+                NODES: 6
+                FLAKE_ATTEMPTS: 2
+                CONFIG_FILE_PATH: asha-mysql/baras_integration_config.json
+            - task: sync-integration-tests
+              attempts: 3
+              file: sync-integration-tests/concourse/task_with_credhub.yml
+              input_mapping:
+                environment: updated-integration-configs
+              params:
+                BOSH_DEPLOYMENT_NAME: cf
+                BOSH_API_INSTANCE: api/0
+                CF_API_TARGET: https://api.cf.asha.app-runtime-interfaces.ci.cloudfoundry.org
+                CF_SKIP_SSL_VALIDATION: true
+                CF_APPS_DOMAIN: *asha-mysql-domain
+                BBL_STATE_DIR: asha-mysql/bbl-state
+                USE_CREDHUB: true
+                RUN_REVISIONS_TESTS: true
+                FLAKE_ATTEMPTS: 2
+        ensure:
+          do:
+          - task: delete-deployment
+            file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
             input_mapping:
-              integration-config: updated-integration-configs
+              bbl-state: asha-mysql-bbl-state
             params:
-              NODES: 10
-              CONFIG_FILE_PATH: asha-mysql/cats_integration_config.json
-              CAPTURE_LOGS: true
-              SKIP_REGEXP: "(shows logs and metrics)|(appropriately handles certain reserved\\/unsafe characters)"
-          - task: capi-bara-tests
-            attempts: 3
-            file: capi-ci/ci/baras/run-baras.yml
-            input_mapping:
-              integration-config: updated-integration-configs
-            params:
-              NODES: 6
-              FLAKE_ATTEMPTS: 2
-              CONFIG_FILE_PATH: asha-mysql/baras_integration_config.json
-          - task: sync-integration-tests
-            attempts: 3
-            file: sync-integration-tests/concourse/task_with_credhub.yml
-            input_mapping:
-              environment: updated-integration-configs
-            params:
-              BOSH_DEPLOYMENT_NAME: cf
-              BOSH_API_INSTANCE: api/0
-              CF_API_TARGET: https://api.cf.asha.app-runtime-interfaces.ci.cloudfoundry.org
-              CF_SKIP_SSL_VALIDATION: true
-              CF_APPS_DOMAIN: *asha-mysql-domain
               BBL_STATE_DIR: asha-mysql/bbl-state
-              USE_CREDHUB: true
-              RUN_REVISIONS_TESTS: true
-              FLAKE_ATTEMPTS: 2
+              IGNORE_ERRORS: true
+          - put: asha-mysql-pool
+            params:
+              release: asha-mysql-pool
   - name: olaf-mysql-tests
     serial: true
     plan:
@@ -1572,46 +1604,59 @@ jobs:
           SYSTEM_DOMAIN: *olaf-mysql-domain
           BBL_STATE_DIR: olaf-mysql/bbl-state
           ENABLED_FEATURE_FLAGS: diego_docker diego_cnb service_instance_sharing route_sharing
-      - in_parallel:
-          - task: acceptance-tests
-            attempts: 3
-            file: cf-deployment-concourse-tasks/run-cats/task.yml
-            input_mapping:
-              integration-config: updated-integration-configs
-            params:
-              NODES: 10
-              CONFIG_FILE_PATH: olaf-mysql/cats_integration_config.json
-              CAPTURE_LOGS: true
-          - task: capi-bara-tests
-            attempts: 3
-            file: capi-ci/ci/baras/run-baras.yml
-            input_mapping:
-              integration-config: updated-integration-configs
-            params:
-              NODES: 6
-              FLAKE_ATTEMPTS: 2
-              CONFIG_FILE_PATH: olaf-mysql/baras_integration_config.json
-          - task: sync-integration-tests
-            attempts: 3
-            file: sync-integration-tests/concourse/task_with_credhub.yml
-            input_mapping:
-              environment: updated-integration-configs
-            params:
-              BOSH_DEPLOYMENT_NAME: cf
-              BOSH_API_INSTANCE: api/0
-              CF_API_TARGET: https://api.cf.olaf.app-runtime-interfaces.ci.cloudfoundry.org
-              CF_SKIP_SSL_VALIDATION: true
-              CF_APPS_DOMAIN: *olaf-mysql-domain
-              BBL_STATE_DIR: olaf-mysql/bbl-state
-              USE_CREDHUB: true
-              RUN_REVISIONS_TESTS: true
-              FLAKE_ATTEMPTS: 2
-      - task: run-blobstore-benchmarks
-        file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
-        input_mapping:
-          capi-ci-private: olaf-mysql-bbl-state
-        params:
-          BBL_STATE_DIR: olaf-mysql/bbl-state
+      - do:
+        - in_parallel:
+            - task: acceptance-tests
+              attempts: 3
+              file: cf-deployment-concourse-tasks/run-cats/task.yml
+              input_mapping:
+                integration-config: updated-integration-configs
+              params:
+                NODES: 10
+                CONFIG_FILE_PATH: olaf-mysql/cats_integration_config.json
+                CAPTURE_LOGS: true
+            - task: capi-bara-tests
+              attempts: 3
+              file: capi-ci/ci/baras/run-baras.yml
+              input_mapping:
+                integration-config: updated-integration-configs
+              params:
+                NODES: 6
+                FLAKE_ATTEMPTS: 2
+                CONFIG_FILE_PATH: olaf-mysql/baras_integration_config.json
+            - task: sync-integration-tests
+              attempts: 3
+              file: sync-integration-tests/concourse/task_with_credhub.yml
+              input_mapping:
+                environment: updated-integration-configs
+              params:
+                BOSH_DEPLOYMENT_NAME: cf
+                BOSH_API_INSTANCE: api/0
+                CF_API_TARGET: https://api.cf.olaf.app-runtime-interfaces.ci.cloudfoundry.org
+                CF_SKIP_SSL_VALIDATION: true
+                CF_APPS_DOMAIN: *olaf-mysql-domain
+                BBL_STATE_DIR: olaf-mysql/bbl-state
+                USE_CREDHUB: true
+                RUN_REVISIONS_TESTS: true
+                FLAKE_ATTEMPTS: 2
+        - task: run-blobstore-benchmarks
+          file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
+          input_mapping:
+            capi-ci-private: olaf-mysql-bbl-state
+          params:
+            BBL_STATE_DIR: olaf-mysql/bbl-state
+        ensure:
+          do:
+            - task: delete-deployment
+              file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+              input_mapping:
+                bbl-state: olaf-mysql-bbl-state
+              params:
+                BBL_STATE_DIR: olaf-mysql/bbl-state
+                IGNORE_ERRORS: true
+            - put: olaf-mysql-pool
+              params:
+                release: olaf-mysql-pool
   - name: scar-psql-tests
     serial: true
     plan:
@@ -1669,41 +1714,54 @@ jobs:
           SYSTEM_DOMAIN: *scar-psql-domain
           BBL_STATE_DIR: scar-psql/bbl-state
           ENABLED_FEATURE_FLAGS: diego_docker diego_cnb service_instance_sharing route_sharing
-      - in_parallel:
-          - task: acceptance-tests
-            attempts: 3
-            file: cf-deployment-concourse-tasks/run-cats/task.yml
-            input_mapping:
-              integration-config: updated-integration-configs
-            params:
-              NODES: 10
-              CONFIG_FILE_PATH: scar-psql/cats_integration_config.json
-              CAPTURE_LOGS: true
-              SKIP_REGEXP: "(shows logs and metrics)|(appropriately handles certain reserved\\/unsafe characters)"
-          - task: capi-bara-tests
-            attempts: 3
-            file: capi-ci/ci/baras/run-baras.yml
-            input_mapping:
-              integration-config: updated-integration-configs
-            params:
-              NODES: 6
-              FLAKE_ATTEMPTS: 2
-              CONFIG_FILE_PATH: scar-psql/baras_integration_config.json
-          - task: sync-integration-tests
-            attempts: 3
-            file: sync-integration-tests/concourse/task_with_credhub.yml
-            input_mapping:
-              environment: updated-integration-configs
-            params:
-              BOSH_DEPLOYMENT_NAME: cf
-              BOSH_API_INSTANCE: api/0
-              CF_API_TARGET: https://api.cf.scar.app-runtime-interfaces.ci.cloudfoundry.org
-              CF_SKIP_SSL_VALIDATION: true
-              CF_APPS_DOMAIN: *scar-psql-domain
-              BBL_STATE_DIR: scar-psql/bbl-state
-              USE_CREDHUB: true
-              RUN_REVISIONS_TESTS: true
-              FLAKE_ATTEMPTS: 2
+      - do:
+        - in_parallel:
+            - task: acceptance-tests
+              attempts: 3
+              file: cf-deployment-concourse-tasks/run-cats/task.yml
+              input_mapping:
+                integration-config: updated-integration-configs
+              params:
+                NODES: 10
+                CONFIG_FILE_PATH: scar-psql/cats_integration_config.json
+                CAPTURE_LOGS: true
+                SKIP_REGEXP: "(shows logs and metrics)|(appropriately handles certain reserved\\/unsafe characters)"
+            - task: capi-bara-tests
+              attempts: 3
+              file: capi-ci/ci/baras/run-baras.yml
+              input_mapping:
+                integration-config: updated-integration-configs
+              params:
+                NODES: 6
+                FLAKE_ATTEMPTS: 2
+                CONFIG_FILE_PATH: scar-psql/baras_integration_config.json
+            - task: sync-integration-tests
+              attempts: 3
+              file: sync-integration-tests/concourse/task_with_credhub.yml
+              input_mapping:
+                environment: updated-integration-configs
+              params:
+                BOSH_DEPLOYMENT_NAME: cf
+                BOSH_API_INSTANCE: api/0
+                CF_API_TARGET: https://api.cf.scar.app-runtime-interfaces.ci.cloudfoundry.org
+                CF_SKIP_SSL_VALIDATION: true
+                CF_APPS_DOMAIN: *scar-psql-domain
+                BBL_STATE_DIR: scar-psql/bbl-state
+                USE_CREDHUB: true
+                RUN_REVISIONS_TESTS: true
+                FLAKE_ATTEMPTS: 2
+        ensure:
+          do:
+            - task: delete-deployment
+              file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+              input_mapping:
+                bbl-state: scar-psql-bbl-state
+              params:
+                BBL_STATE_DIR: scar-psql/bbl-state
+                IGNORE_ERRORS: true
+            - put: scar-psql-pool
+              params:
+                release: scar-psql-pool
   - name: gyro-exp-tests
     serial: true
     plan:
@@ -1762,203 +1820,54 @@ jobs:
           BBL_STATE_DIR: gyro-exp/bbl-state
           # TODO enable anything else?
           ENABLED_FEATURE_FLAGS: diego_docker diego_cnb service_instance_sharing route_sharing
-      - in_parallel:
-          - task: acceptance-tests
-            attempts: 3
-            file: cf-deployment-concourse-tasks/run-cats/task.yml
-            input_mapping:
-              integration-config: updated-integration-configs
-            params:
-              NODES: 10
-              CONFIG_FILE_PATH: gyro-exp/cats_integration_config.json
-              CAPTURE_LOGS: true
-              SKIP_REGEXP: "(shows logs and metrics)|(appropriately handles certain reserved\\/unsafe characters)"
-          - task: capi-bara-tests
-            attempts: 3
-            file: capi-ci/ci/baras/run-baras.yml
-            input_mapping:
-              integration-config: updated-integration-configs
-            params:
-              NODES: 6
-              FLAKE_ATTEMPTS: 2
-              CONFIG_FILE_PATH: gyro-exp/baras_integration_config.json
-          - task: sync-integration-tests
-            attempts: 3
-            file: sync-integration-tests/concourse/task_with_credhub.yml
-            input_mapping:
-              environment: updated-integration-configs
-            params:
-              BOSH_DEPLOYMENT_NAME: cf
-              BOSH_API_INSTANCE: api/0
-              CF_API_TARGET: https://api.cf.gyro.app-runtime-interfaces.ci.cloudfoundry.org
-              CF_SKIP_SSL_VALIDATION: false
-              CF_APPS_DOMAIN: *gyro-exp-domain
-              BBL_STATE_DIR: gyro-exp/bbl-state
-              USE_CREDHUB: true
-              RUN_REVISIONS_TESTS: true
-              FLAKE_ATTEMPTS: 2
-  - name: elsa-ha-destroy-cf
-    serial: true
-    plan:
-      - in_parallel:
-          - get: capi-release
-            resource: capi-release-develop
-            passed:
-              - elsa-ha-tests
-            trigger: true
-            params:
-              submodules: none
-          - get: capi-release-tarball
-            passed:
-              - elsa-ha-tests
-          - get: cf-deployment-concourse-tasks
-          - get: elsa-ha-bbl-state
-          - get: elsa-ha-pool
-      - task: delete-deployment
-        file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
-        input_mapping:
-          bbl-state: elsa-ha-bbl-state
-        params:
-          BBL_STATE_DIR: elsa-ha/bbl-state
-          IGNORE_ERRORS: true
-      - put: elsa-ha-pool
-        params:
-          release: elsa-ha-pool
-  - name: kiki-mig-destroy-cf
-    serial: true
-    plan:
-      - in_parallel:
-          - get: capi-release
-            resource: capi-release-develop
-            passed:
-              - kiki-mig-tests
-            trigger: true
-            params:
-              submodules: none
-          - get: capi-release-tarball
-            passed:
-              - kiki-mig-tests
-          - get: cf-deployment-concourse-tasks
-          - get: kiki-mig-bbl-state
-          - get: kiki-mig-pool
-      - task: delete-deployment
-        file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
-        input_mapping:
-          bbl-state: kiki-mig-bbl-state
-        params:
-          BBL_STATE_DIR: kiki-mig/bbl-state
-          IGNORE_ERRORS: true
-      - put: kiki-mig-pool
-        params:
-          release: kiki-mig-pool
-  - name: asha-mysql-destroy-cf
-    serial: true
-    plan:
-      - in_parallel:
-          - get: capi-release
-            resource: capi-release-develop
-            passed:
-              - asha-mysql-tests
-            trigger: true
-            params:
-              submodules: none
-          - get: capi-release-tarball
-            passed:
-              - asha-mysql-tests
-          - get: cf-deployment-concourse-tasks
-          - get: asha-mysql-bbl-state
-          - get: asha-mysql-pool
-      - task: delete-deployment
-        file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
-        input_mapping:
-          bbl-state: asha-mysql-bbl-state
-        params:
-          BBL_STATE_DIR: asha-mysql/bbl-state
-          IGNORE_ERRORS: true
-      - put: asha-mysql-pool
-        params:
-          release: asha-mysql-pool
-  - name: olaf-mysql-destroy-cf
-    serial: true
-    plan:
-      - in_parallel:
-          - get: capi-release
-            resource: capi-release-develop
-            passed:
-              - olaf-mysql-tests
-            trigger: true
-            params:
-              submodules: none
-          - get: capi-release-tarball
-            passed:
-              - olaf-mysql-tests
-          - get: cf-deployment-concourse-tasks
-          - get: olaf-mysql-bbl-state
-          - get: olaf-mysql-pool
-      - task: delete-deployment
-        file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
-        input_mapping:
-          bbl-state: olaf-mysql-bbl-state
-        params:
-          BBL_STATE_DIR: olaf-mysql/bbl-state
-          IGNORE_ERRORS: true
-      - put: olaf-mysql-pool
-        params:
-          release: olaf-mysql-pool
-  - name: scar-psql-destroy-cf
-    serial: true
-    plan:
-      - in_parallel:
-          - get: capi-release
-            resource: capi-release-develop
-            passed:
-              - scar-psql-tests
-            trigger: true
-            params:
-              submodules: none
-          - get: capi-release-tarball
-            passed:
-              - scar-psql-tests
-          - get: cf-deployment-concourse-tasks
-          - get: scar-psql-bbl-state
-          - get: scar-psql-pool
-      - task: delete-deployment
-        file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
-        input_mapping:
-          bbl-state: scar-psql-bbl-state
-        params:
-          BBL_STATE_DIR: scar-psql/bbl-state
-          IGNORE_ERRORS: true
-      - put: scar-psql-pool
-        params:
-          release: scar-psql-pool
-  - name: gyro-exp-destroy-cf
-    serial: true
-    plan:
-      - in_parallel:
-          - get: capi-release
-            resource: capi-release-develop
-            passed:
-              - gyro-exp-tests
-            trigger: true
-            params:
-              submodules: none
-          - get: capi-release-tarball
-            passed:
-              - gyro-exp-tests
-          - get: cf-deployment-concourse-tasks
-          - get: gyro-exp-bbl-state
-          - get: gyro-exp-pool
-      - task: delete-deployment
-        file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
-        input_mapping:
-          bbl-state: gyro-exp-bbl-state
-        params:
-          BBL_STATE_DIR: gyro-exp/bbl-state
-          IGNORE_ERRORS: true
-      - put: gyro-exp-pool
-        params:
-          release: gyro-exp-pool
+      - do:
+        - in_parallel:
+            - task: acceptance-tests
+              attempts: 3
+              file: cf-deployment-concourse-tasks/run-cats/task.yml
+              input_mapping:
+                integration-config: updated-integration-configs
+              params:
+                NODES: 10
+                CONFIG_FILE_PATH: gyro-exp/cats_integration_config.json
+                CAPTURE_LOGS: true
+                SKIP_REGEXP: "(shows logs and metrics)|(appropriately handles certain reserved\\/unsafe characters)"
+            - task: capi-bara-tests
+              attempts: 3
+              file: capi-ci/ci/baras/run-baras.yml
+              input_mapping:
+                integration-config: updated-integration-configs
+              params:
+                NODES: 6
+                FLAKE_ATTEMPTS: 2
+                CONFIG_FILE_PATH: gyro-exp/baras_integration_config.json
+            - task: sync-integration-tests
+              attempts: 3
+              file: sync-integration-tests/concourse/task_with_credhub.yml
+              input_mapping:
+                environment: updated-integration-configs
+              params:
+                BOSH_DEPLOYMENT_NAME: cf
+                BOSH_API_INSTANCE: api/0
+                CF_API_TARGET: https://api.cf.gyro.app-runtime-interfaces.ci.cloudfoundry.org
+                CF_SKIP_SSL_VALIDATION: false
+                CF_APPS_DOMAIN: *gyro-exp-domain
+                BBL_STATE_DIR: gyro-exp/bbl-state
+                USE_CREDHUB: true
+                RUN_REVISIONS_TESTS: true
+                FLAKE_ATTEMPTS: 2
+        ensure:
+          do:
+            - task: delete-deployment
+              file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+              input_mapping:
+                bbl-state: gyro-exp-bbl-state
+              params:
+                BBL_STATE_DIR: gyro-exp/bbl-state
+                IGNORE_ERRORS: true
+            - put: gyro-exp-pool
+              params:
+                release: gyro-exp-pool
   - name: bump-ci-passed
     serial: true
     plan:
@@ -1966,12 +1875,12 @@ jobs:
           - get: capi-release
             resource: capi-release-develop
             passed:
-              - elsa-ha-destroy-cf
-              - kiki-mig-destroy-cf
-              - asha-mysql-destroy-cf
-              - olaf-mysql-destroy-cf
-              - scar-psql-destroy-cf
-              - gyro-exp-destroy-cf
+              - elsa-ha-tests
+              - kiki-mig-tests
+              - asha-mysql-tests
+              - olaf-mysql-tests
+              - scar-psql-tests
+              - gyro-exp-tests
             trigger: true
             params:
               submodules: none
