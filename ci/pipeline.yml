@@ -1358,6 +1358,7 @@ jobs:
             resource: capi-bara-tests-kiki
           - get: sync-integration-tests
             resource: sync-integration-tests-kiki
+          - get: kiki-mig-pool
       - task: updated-integration-configs
         file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
         input_mapping:
@@ -1463,6 +1464,7 @@ jobs:
           - get: capi-ci
           - get: capi-bara-tests
           - get: sync-integration-tests
+          - get: asha-mysql-pool
       - task: updated-integration-configs
         file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
         input_mapping:
@@ -1568,6 +1570,7 @@ jobs:
           - get: capi-ci
           - get: capi-bara-tests
           - get: sync-integration-tests
+          - get: olaf-mysql-pool
       - task: updated-integration-configs
         file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
         input_mapping:
@@ -1678,6 +1681,7 @@ jobs:
           - get: capi-ci
           - get: capi-bara-tests
           - get: sync-integration-tests
+          - get: scar-psql-pool
       - task: updated-integration-configs
         file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
         input_mapping:
@@ -1783,6 +1787,7 @@ jobs:
           - get: capi-ci
           - get: capi-bara-tests
           - get: sync-integration-tests
+          - get: gyro-exp-pool
       - task: updated-integration-configs
         file: cf-deployment-concourse-tasks/update-integration-configs/task.yml
         input_mapping:
