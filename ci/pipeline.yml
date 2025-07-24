@@ -2284,7 +2284,7 @@ jobs:
           BBL_ENV_NAME: kiki-mig
           BBL_IAAS: gcp
           BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-kiki-mig-service-account))
-          BBL_GCP_REGION: us-east4
+          BBL_GCP_REGION: us-east1
           BBL_LB_CERT: ((kiki_lb.certificate))
           BBL_LB_KEY: ((kiki_lb.private_key))
           LB_DOMAIN: *kiki-domain
