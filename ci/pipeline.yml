@@ -1142,9 +1142,12 @@ jobs:
           BOSH_DEPLOY_ARGS: |
             --var bbl_env_name=scar-psql
           OPS_FILES: |
+            base-ops-files/operations/azure.yml
             base-ops-files/operations/add-persistent-isolation-segment-diego-cell.yml
             base-ops-files/operations/use-compiled-releases.yml
             base-ops-files/operations/use-postgres.yml
+            base-ops-files/operations/use-external-blobstore.yml
+            base-ops-files/operations/use-azure-storage-blobstore.yml
             use-latest-capi.yml
             scale-up-cells.yml
             scale-generic-worker-processes.yml
@@ -2432,12 +2435,16 @@ jobs:
           bbl-config: scar-psql-bbl-state
         params:
           BBL_STATE_DIR: scar-psql/bbl-state
+          BBL_CONFIG_DIR: scar-psql/bbl-config
           BBL_ENV_NAME: scar-psql
-          BBL_IAAS: gcp
-          BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-scar-service-account))
-          BBL_GCP_REGION: us-east1
-          BBL_LB_CERT: ((scar_lb.certificate))
-          BBL_LB_KEY: ((scar_lb.private_key))
+          BBL_IAAS: azure
+          BBL_AZURE_CLIENT_ID: ((capi-bbl-scar-azure-client-id))
+          BBL_AZURE_CLIENT_SECRET: ((capi-bbl-scar-azure-client-secret))
+          BBL_AZURE_SUBSCRIPTION_ID: ((capi-bbl-scar-azure-subscription-id))
+          BBL_AZURE_TENANT_ID: ((capi-bbl-scar-azure-tenant-id))
+          BBL_AZURE_REGION: westeurope
+          BBL_LB_CERT: ../scar.pfx
+          BBL_LB_KEY: ../pfx_password.txt
           LB_DOMAIN: *scar-psql-domain
         ensure:
           put: scar-psql-bbl-state
@@ -2653,7 +2660,10 @@ jobs:
           bbl-state: scar-psql-bbl-state
         params:
           BBL_STATE_DIR: scar-psql/bbl-state
-          BBL_GCP_SERVICE_ACCOUNT_KEY: ((capi-bbl-scar-service-account))
+          BBL_AZURE_CLIENT_ID: ((capi-bbl-scar-azure-client-id))
+          BBL_AZURE_CLIENT_SECRET: ((capi-bbl-scar-azure-client-secret))
+          BBL_AZURE_SUBSCRIPTION_ID: ((capi-bbl-scar-azure-subscription-id))
+          BBL_AZURE_TENANT_ID: ((capi-bbl-scar-azure-tenant-id))
         ensure:
           put: scar-psql-bbl-state
           params:

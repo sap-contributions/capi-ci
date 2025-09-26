@@ -41,8 +41,8 @@ All environments are short-lived. The webserver is now "Puma" for all environmen
     |                                                                      |
     |  Scar: used for testing CATS and CAPI-BARA tests on PostgreSQL       |
     |          · Database: PostgreSQL                                      |
-    |          · Platform: GCP                                             |
-    |          · Blobstore: WebDAV                                         |
+    |          · Platform: Azure                                           |
+    |          · Blobstore: Azure Blob Storage                             |
     |                                                                      |
     |  Gyro: used for testing experimental features on GCP / PostgreSQL    |
     |          · Database: PostgreSQL                                      |
