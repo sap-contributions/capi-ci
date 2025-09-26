@@ -1109,6 +1109,7 @@ jobs:
           bbl-state: scar-psql-bbl-state
         params:
           BBL_STATE_DIR: scar-psql/bbl-state
+          INFRASTRUCTURE: azure
       - task: upload-capi-release-tarball
         file: capi-ci/ci/bosh/upload_capi_release_tarball.yml
         input_mapping:
@@ -1156,6 +1157,8 @@ jobs:
             base-ops-files/operations/test/speed-up-dynamic-asgs.yml
             seed-uaa-asg.yml
             tag-bbl-env.yml
+          VARS_FILES: |
+            scar-psql/bbl-state/vars/director-vars-file.yml
       - task: ensure-api-healthy
         file: runtime-ci/tasks/ensure-api-healthy/task.yml
         input_mapping:
