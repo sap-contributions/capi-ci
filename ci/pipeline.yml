@@ -1150,7 +1150,7 @@ jobs:
             base-ops-files/operations/use-external-blobstore.yml
             base-ops-files/operations/use-azure-storage-blobstore.yml
             use-latest-capi.yml
-            scale-up-cells.yml
+            scale-up-cells-large.yml
             scale-generic-worker-processes.yml
             disable-uaa-get-requests.yml
             seed-credhub-asg.yml
