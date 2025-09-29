@@ -2431,6 +2431,22 @@ jobs:
           - get: cf-deployment-concourse-tasks
           - get: scar-psql-bbl-state
           - get: capi-ci
+      - task: export-pkcs12-certificate
+        file: capi-ci/ci/bbl-tasks/export_pkcs12_certificate.yml
+        input_mapping:
+          capi-ci-private-certs: scar-psql-bbl-state
+        params:
+          BBL_ENV_NAME: scar-psql
+          BBL_LB_CERT: ((scar_lb.certificate))
+          BBL_LB_KEY: ((scar_lb.private_key))
+          GIT_COMMIT_USERNAME: ((ari-wg-gitbot-username))
+          GIT_COMMIT_EMAIL: ((ari-wg-gitbot-email))
+          GIT_COMMIT_MESSAGE: "Update pfx certificate"
+        ensure:
+          put: scar-psql-bbl-state
+          params:
+            repository: updated-capi-ci-private-certs
+            rebase: true
       - task: bbl-up-scar-psql
         file: cf-deployment-concourse-tasks/bbl-up/task.yml
         input_mapping:
@@ -2446,7 +2462,7 @@ jobs:
           BBL_AZURE_SUBSCRIPTION_ID: ((capi-bbl-scar-azure-subscription-id))
           BBL_AZURE_TENANT_ID: ((capi-bbl-scar-azure-tenant-id))
           BBL_AZURE_REGION: westeurope
-          BBL_LB_CERT: ../scar.pfx
+          BBL_LB_CERT: ../scar-psql.pfx
           BBL_LB_KEY: ../pfx_password.txt
           LB_DOMAIN: *scar-psql-domain
         ensure:
