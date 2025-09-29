@@ -1125,7 +1125,7 @@ jobs:
         params:
           NEW_OPS_FILES: |
             cf-deployment-operations/use-latest-capi.yml
-            cf-deployment-operations/scale-up-cells.yml
+            cf-deployment-operations/scale-up-cells-large.yml
             cf-deployment-operations/scale-generic-worker-processes.yml
             cf-deployment-operations/disable-uaa-get-requests.yml
             cf-deployment-operations/seed-credhub-asg.yml
