@@ -17,13 +17,17 @@ create_dns_record() {
   gcloud auth activate-service-account --key-file="${service_key_path}"
   gcloud config set project "${GCP_PROJECT_ID}"
 
+  # GCP
   if bbl lbs --json | jq -e '.cf_system_domain_dns_servers' > /dev/null; then
-    # "cf_system_domain_dns_servers" is for GCP and "env_dns_zone_name_servers" for AWS ('//' is the alternative operator)
-    bbl_name_servers_json="$( bbl lbs --json | jq -r '.cf_system_domain_dns_servers // (.env_dns_zone_name_servers | map(. + "."))' )"
+    bbl_name_servers_json="$( bbl lbs --json | jq -r '.cf_system_domain_dns_servers' )"
     bbl_name_servers_raw="$( echo "${bbl_name_servers_json}" | jq -r 'join(" ")' )"
+  # AWS
+  elif bbl lbs --json | jq -e '.env_dns_zone_name_servers' > /dev/null; then
+    bbl_name_servers_json="$( bbl lbs --json | jq -r '.env_dns_zone_name_servers | map(. + ".")' )"
+    bbl_name_servers_raw="$( echo "${bbl_name_servers_json}" | jq -r 'join(" ")' )"
+  # Azure does not return the DNS servers via `bbl lbs`, so we use `bbl outputs` instead
   else
-    # Azure does not return the DNS servers via `bbl lbs`, so we use `bbl outputs` instead
-    bbl_name_servers_raw="$( bbl outputs | yq -r '.system_domain_dns_servers' | yq -r 'join(" ")' )"
+    bbl_name_servers_raw="$( bbl outputs | yq -r '.system_domain_dns_servers | join(" ")' )"
   fi
   gcp_name_servers_json="$( gcloud dns record-sets list --zone "${SHARED_DNS_ZONE_NAME}" --name "${DNS_DOMAIN}" --format=json )"
   gcloud dns record-sets transaction start --zone="${SHARED_DNS_ZONE_NAME}"
