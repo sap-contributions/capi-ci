@@ -1,0 +1,20 @@
+---
+platform: linux
+image_resource:
+  type: registry-image
+  source:
+    repository: cloudfoundry/cf-deployment-concourse-tasks
+inputs:
+  - name: capi-ci
+  - name: capi-ci-private-certs
+outputs:
+  - name: updated-capi-ci-private-certs
+run:
+  path: capi-ci/ci/bbl-tasks/export_pkcs12_certificate.sh
+params:
+  BBL_ENV_NAME: ~
+  BBL_LB_CERT: ~
+  BBL_LB_KEY: ~
+  GIT_COMMIT_USERNAME: ~
+  GIT_COMMIT_EMAIL: ~
+  GIT_COMMIT_MESSAGE: "Update pfx certificate"
