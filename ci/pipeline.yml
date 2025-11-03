@@ -1784,6 +1784,12 @@ jobs:
                 USE_CREDHUB: true
                 RUN_REVISIONS_TESTS: true
                 FLAKE_ATTEMPTS: 2
+        - task: run-blobstore-benchmarks
+          file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
+          input_mapping:
+            capi-ci-private: scar-psql-bbl-state
+          params:
+            BBL_STATE_DIR: scar-psql/bbl-state
         ensure:
           do:
             - task: delete-deployment
