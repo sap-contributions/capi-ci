@@ -784,6 +784,7 @@ jobs:
             cf-deployment-operations/disable-skip-cert-verify.yml
             cf-deployment-operations/disable-skip-cert-verify-iso-seg.yml
             cf-deployment-operations/tag-bbl-env.yml
+            cf-deployment-operations/use-azure-storage-cli.yml
       - task: deploy
         file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
         input_mapping:
