@@ -32,7 +32,7 @@
     environment: ((environment))
     azure_storage_account_name: ((blobstore_storage_account_name))
     azure_storage_access_key: ((blobstore_storage_access_key))
-    container_name: ((droplets_directory_key))
+    container_name: ((droplet_directory_key))
 - type: remove
   path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/droplets/fog_connection?
 
@@ -49,7 +49,7 @@
     environment: ((environment))
     azure_storage_account_name: ((blobstore_storage_account_name))
     azure_storage_access_key: ((blobstore_storage_access_key))
-    container_name: ((packages_directory_key))
+    container_name: ((app_package_directory_key))
 - type: remove
   path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/packages/fog_connection?
 
@@ -101,7 +101,7 @@
     environment: ((environment))
     azure_storage_account_name: ((blobstore_storage_account_name))
     azure_storage_access_key: ((blobstore_storage_access_key))
-    container_name: ((droplets_directory_key))
+    container_name: ((droplet_directory_key))
 - type: remove
   path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc/droplets/fog_connection?
 
@@ -118,7 +118,7 @@
     environment: ((environment))
     azure_storage_account_name: ((blobstore_storage_account_name))
     azure_storage_access_key: ((blobstore_storage_access_key))
-    container_name: ((packages_directory_key))
+    container_name: ((app_package_directory_key))
 - type: remove
   path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc/packages/fog_connection?
 
@@ -170,7 +170,7 @@
     environment: ((environment))
     azure_storage_account_name: ((blobstore_storage_account_name))
     azure_storage_access_key: ((blobstore_storage_access_key))
-    container_name: ((droplets_directory_key))
+    container_name: ((droplet_directory_key))
 - type: remove
   path: /instance_groups/name=scheduler/jobs/name=cloud_controller_clock/properties/cc/droplets/fog_connection?
 
@@ -187,7 +187,7 @@
     environment: ((environment))
     azure_storage_account_name: ((blobstore_storage_account_name))
     azure_storage_access_key: ((blobstore_storage_access_key))
-    container_name: ((packages_directory_key))
+    container_name: ((app_package_directory_key))
 - type: remove
   path: /instance_groups/name=scheduler/jobs/name=cloud_controller_clock/properties/cc/packages/fog_connection?
 
