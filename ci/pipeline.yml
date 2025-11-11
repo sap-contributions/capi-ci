@@ -44,6 +44,7 @@ groups:
   - name: bump-dependencies
     jobs:
       - bump-golang-package
+      - bump-ruby-package
       - bump-nginx-blob
       - bump-valkey-blob
   - name: ship-it
@@ -239,6 +240,15 @@ resources:
     icon: git
     source:
       uri: https://github.com/cloudfoundry/bosh-package-golang-release.git
+      branch: main
+      tag_filter: v*
+      username: ((ari-wg-gitbot-username))
+      password: ((ari-wg-gitbot-token))
+  - name: ruby-release
+    type: git
+    icon: git
+    source:
+      uri: https://github.com/cloudfoundry/bosh-package-ruby-release.git
       branch: main
       tag_filter: v*
       username: ((ari-wg-gitbot-username))
@@ -1971,6 +1981,30 @@ jobs:
       - put: capi-release-develop
         params:
           repository: updated-capi-release
+          rebase: true
+  - name: bump-ruby-package
+    serial: true
+    plan:
+      - in_parallel:
+          - get: ruby-release
+            trigger: true
+          - get: capi-release
+            resource: capi-release-develop
+            params:
+              submodules: none
+      - task: update-ruby-package
+        file: ruby-release/ci/tasks/shared/bump-ruby-package.yml
+        input_mapping:
+          bosh-release: capi-release
+        params:
+          GIT_USER_NAME: "ari-wg-gitbot"
+          GIT_USER_EMAIL: "app-runtime-interfaces@cloudfoundry.org"
+          PACKAGE: ruby-3.2
+          RUBY_VERSION_PATH: ./ruby-version
+          PRIVATE_YML: ((capi_release_private_yaml))
+      - put: capi-release-develop
+        params:
+          repository: bosh-release
           rebase: true
   - name: bump-nginx-blob
     serial: true
