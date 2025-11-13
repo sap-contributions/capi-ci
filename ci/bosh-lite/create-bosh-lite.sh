@@ -55,6 +55,7 @@ pushd "${state_dir}" > /dev/null
     -o "${script_dir}/use-external-ip-credhub.yml" ${additional_args} \
     -o "${script_dir}/use-ssd-disks.yml" \
     -o "${script_dir}/tag-bosh-lite-env.yml" \
+    -o "${script_dir}/warden/use-jammy.yml" \
     -v director_name="bosh-lite" \
     -v gcp_credentials_json="'${GCP_JSON_KEY}'" \
     -v env_name="${env_name}" \
