@@ -64,6 +64,7 @@ pushd "${state_dir}" > /dev/null
     > ./director.yml
 
   echo -e "\nDeploying new Bosh-Lite..."
+  export BOSH_LOG_LEVEL=debug
   bosh create-env \
     --state ./state.json \
     --vars-store ./creds.yml \
