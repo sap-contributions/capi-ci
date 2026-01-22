@@ -26,20 +26,20 @@ pushd storage-cli-release > /dev/null
   new_storagecli_binary="${PWD}/storage-cli-${new_storagecli_version}-linux-amd64"
   new_storagecli_url=$(cat url) || { echo "Error: cat command for url failed."; exit 1; }
   
-  if [ ! -f "$new_storagecli_binary" ]; then
-    echo "Error: Binary file ${new_storagecli_binary} not found."
+  if [ ! -x "$new_storagecli_binary" ]; then
+    echo "Error: Binary file ${new_storagecli_binary} not found or not executable."
     exit 1
   fi
   
-  pushd capi-release > /dev/null
-    bosh remove-blob -n "${current_storagecli_blob_name}"
-    bosh add-blob -n "$new_storagecli_binary" storage-cli/storage-cli-"${new_storagecli_version}"-linux-amd64
+  echo "New storage-cli version is '${new_storagecli_version}'"
+popd > /dev/null
+
 if [[ "$current_storagecli_version" == "$new_storagecli_version" ]]; then
   echo "The current storage-cli version is the same as the new version."
 else
   pushd capi-release > /dev/null
     bosh remove-blob -n "${current_storagecli_blob_name}"
-    bosh add-blob -n "$new_storagecli_source_tgz" storage-cli/"${new_storagecli_version}".tar.gz
+    bosh add-blob -n "$new_storagecli_binary" storage-cli/storage-cli-"${new_storagecli_version}"-linux-amd64
 
     sed -i "0,/$current_storagecli_version/s//$new_storagecli_version/" packages/storage-cli/packaging || { echo "Error: sed command for 'packaging' failed."; exit 1; }
     sed -i "s/$current_storagecli_version/$new_storagecli_version/g" packages/storage-cli/README.md || { echo "Error: sed command for 'README' failed."; exit 1; }
