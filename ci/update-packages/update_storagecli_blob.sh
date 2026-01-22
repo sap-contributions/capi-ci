@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -xeu -o pipefail
+set -eu -o pipefail
 
 if [[ -z "${PRIVATE_YAML}" ]]; then
   echo "Error: PRIVATE_YAML is not set."
