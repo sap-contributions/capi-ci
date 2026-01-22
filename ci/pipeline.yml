@@ -47,6 +47,7 @@ groups:
       - bump-ruby-package
       - bump-nginx-blob
       - bump-valkey-blob
+      - bump-storagecli-blob
   - name: ship-it
     jobs:
       - ship-it
@@ -157,14 +158,6 @@ resources:
     source:
       uri: https://github.com/cloudfoundry/capi-release.git
       branch: develop
-      username: ((ari-wg-gitbot-username))
-      password: ((ari-wg-gitbot-token))
-  - name: capi-release-test
-    type: git
-    icon: git
-    source:
-      uri: https://github.com/cloudfoundry/capi-release.git
-      branch: test
       username: ((ari-wg-gitbot-username))
       password: ((ari-wg-gitbot-token))
   - name: capi-release-main
@@ -2072,14 +2065,14 @@ jobs:
                 - storage-cli-*-linux-amd64
           - get: capi-ci
           - get: capi-release
-            resource: capi-release-test
+            resource: capi-release-develop
             params:
               submodules: none
       - task: update-storagecli-blob
         file: capi-ci/ci/update-packages/update_storagecli_blob.yml
         params:
           PRIVATE_YAML: ((capi_release_private_yaml))
-      - put: capi-release-test
+      - put: capi-release-develop
         params:
           repository: updated-capi-release
           rebase: true
