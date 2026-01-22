@@ -159,6 +159,14 @@ resources:
       branch: develop
       username: ((ari-wg-gitbot-username))
       password: ((ari-wg-gitbot-token))
+  - name: capi-release-test
+    type: git
+    icon: git
+    source:
+      uri: https://github.com/cloudfoundry/capi-release.git
+      branch: test
+      username: ((ari-wg-gitbot-username))
+      password: ((ari-wg-gitbot-token))
   - name: capi-release-main
     type: git
     icon: git
