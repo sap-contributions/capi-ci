@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eu -o pipefail
+set -xeu -o pipefail
 
 if [[ -z "${PRIVATE_YAML}" ]]; then
   echo "Error: PRIVATE_YAML is not set."
@@ -26,7 +26,7 @@ pushd storage-cli-release > /dev/null
   new_storagecli_binary="${PWD}/storage-cli-${new_storagecli_version}-linux-amd64"
   new_storagecli_url=$(cat url) || { echo "Error: cat command for url failed."; exit 1; }
   
-  if [ ! -x "$new_storagecli_binary" ]; then
+  if [ ! -f "$new_storagecli_binary" ]; then
     echo "Error: Binary file ${new_storagecli_binary} not found or not executable."
     exit 1
   fi
