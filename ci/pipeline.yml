@@ -272,6 +272,13 @@ resources:
       repository: valkey
       semver_constraint: 7.2.x
       access_token: ((ari-wg-gitbot-token))
+  - name: storage-cli-release
+    type: github-release
+    icon: github
+    source:
+      owner: cloudfoundry
+      repository: storage-cli
+      access_token: ((ari-wg-gitbot-token))
   - name: capi-ci
     type: git
     icon: git
@@ -2043,6 +2050,28 @@ jobs:
         params:
           PRIVATE_YAML: ((capi_release_private_yaml))
       - put: capi-release-develop
+        params:
+          repository: updated-capi-release
+          rebase: true
+  - name: bump-storagecli-blob
+    serial: true
+    plan:
+      - in_parallel:
+          - get: storage-cli-release
+            trigger: true
+            params:
+              globs:
+                - storage-cli-*-linux-amd64
+          - get: capi-ci
+          - get: capi-release
+            resource: capi-release-test
+            params:
+              submodules: none
+      - task: update-storagecli-blob
+        file: capi-ci/ci/update-packages/update_storagecli_blob.yml
+        params:
+          PRIVATE_YAML: ((capi_release_private_yaml))
+      - put: capi-release-test
         params:
           repository: updated-capi-release
           rebase: true
