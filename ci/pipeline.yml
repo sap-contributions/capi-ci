@@ -47,6 +47,7 @@ groups:
       - bump-ruby-package
       - bump-nginx-blob
       - bump-valkey-blob
+      - bump-storagecli-blob
   - name: ship-it
     jobs:
       - ship-it
@@ -271,6 +272,13 @@ resources:
       owner: valkey-io
       repository: valkey
       semver_constraint: 7.2.x
+      access_token: ((ari-wg-gitbot-token))
+  - name: storage-cli-release
+    type: github-release
+    icon: github
+    source:
+      owner: cloudfoundry
+      repository: storage-cli
       access_token: ((ari-wg-gitbot-token))
   - name: capi-ci
     type: git
@@ -2040,6 +2048,28 @@ jobs:
               submodules: none
       - task: update-valkey-blob
         file: capi-ci/ci/update-packages/update_valkey_blob.yml
+        params:
+          PRIVATE_YAML: ((capi_release_private_yaml))
+      - put: capi-release-develop
+        params:
+          repository: updated-capi-release
+          rebase: true
+  - name: bump-storagecli-blob
+    serial: true
+    plan:
+      - in_parallel:
+          - get: storage-cli-release
+            trigger: true
+            params:
+              globs:
+                - storage-cli-*-linux-amd64
+          - get: capi-ci
+          - get: capi-release
+            resource: capi-release-develop
+            params:
+              submodules: none
+      - task: update-storagecli-blob
+        file: capi-ci/ci/update-packages/update_storagecli_blob.yml
         params:
           PRIVATE_YAML: ((capi_release_private_yaml))
       - put: capi-release-develop
