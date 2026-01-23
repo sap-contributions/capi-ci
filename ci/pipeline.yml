@@ -802,6 +802,7 @@ jobs:
             cf-deployment-operations/disable-skip-cert-verify.yml
             cf-deployment-operations/disable-skip-cert-verify-iso-seg.yml
             cf-deployment-operations/tag-bbl-env.yml
+            cf-deployment-operations/use-gcs-storage-cli.yml
       - task: deploy
         file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
         input_mapping:
@@ -821,6 +822,7 @@ jobs:
             base-ops-files/operations/use-gcs-blobstore-service-account.yml
             base-ops-files/operations/use-compiled-releases.yml
             base-ops-files/operations/experimental/use-compiled-releases-windows.yml
+            use-gcs-storage-cli.yml
             use-latest-capi.yml
             scale-up-cells.yml
             scale-generic-worker-processes.yml
