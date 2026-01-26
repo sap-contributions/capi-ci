@@ -11,7 +11,7 @@
 - type: replace
   path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/buildpacks/connection_config?
   value:
-    google_json_key_string: 
+    google_json_key_string: ((gcs_service_account_json_key))
     bucket_name: ((buildpack_directory_key))
 - type: remove
   path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/buildpacks/fog_connection?
@@ -25,7 +25,7 @@
 - type: replace
   path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/droplets/connection_config?
   value:
-    google_json_key_string: 
+    google_json_key_string: ((gcs_service_account_json_key))
     bucket_name: ((droplet_directory_key))
 - type: remove
   path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/droplets/fog_connection?
@@ -39,7 +39,7 @@
 - type: replace
   path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/packages/connection_config?
   value:
-    google_json_key_string: 
+    google_json_key_string: ((gcs_service_account_json_key))
     bucket_name: ((app_package_directory_key))
 - type: remove
   path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/packages/fog_connection?
@@ -53,7 +53,7 @@
 - type: replace
   path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/resource_pool/connection_config?
   value:
-    google_json_key_string: 
+    google_json_key_string: ((gcs_service_account_json_key))
     bucket_name: ((resource_directory_key))
 - type: remove
   path: /instance_groups/name=api/jobs/name=cloud_controller_ng/properties/cc/resource_pool/fog_connection?
@@ -68,7 +68,7 @@
 - type: replace
   path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc/buildpacks/connection_config?
   value:
-    google_json_key_string: 
+    google_json_key_string: ((gcs_service_account_json_key))
     bucket_name: ((buildpack_directory_key))
 - type: remove
   path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc/buildpacks/fog_connection?
@@ -82,7 +82,7 @@
 - type: replace
   path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc/droplets/connection_config?
   value:
-    google_json_key_string: 
+    google_json_key_string: ((gcs_service_account_json_key))
     bucket_name: ((droplet_directory_key))
 - type: remove
   path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc/droplets/fog_connection?
@@ -96,7 +96,7 @@
 - type: replace
   path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc/packages/connection_config?
   value:
-    google_json_key_string: 
+    google_json_key_string: ((gcs_service_account_json_key))
     bucket_name: ((app_package_directory_key))
 - type: remove
   path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc/packages/fog_connection?
@@ -110,7 +110,7 @@
 - type: replace
   path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc/resource_pool/connection_config?
   value:
-    google_json_key_string: 
+    google_json_key_string: ((gcs_service_account_json_key))
     bucket_name: ((resource_directory_key))
 - type: remove
   path: /instance_groups/name=cc-worker/jobs/name=cloud_controller_worker/properties/cc/resource_pool/fog_connection?
@@ -125,7 +125,7 @@
 - type: replace
   path: /instance_groups/name=scheduler/jobs/name=cloud_controller_clock/properties/cc/buildpacks/connection_config?
   value:
-    google_json_key_string: 
+    google_json_key_string: ((gcs_service_account_json_key))
     bucket_name: ((buildpack_directory_key))
 - type: remove
   path: /instance_groups/name=scheduler/jobs/name=cloud_controller_clock/properties/cc/buildpacks/fog_connection?
@@ -139,7 +139,7 @@
 - type: replace
   path: /instance_groups/name=scheduler/jobs/name=cloud_controller_clock/properties/cc/droplets/connection_config?
   value:
-    google_json_key_string: 
+    google_json_key_string: ((gcs_service_account_json_key))
     bucket_name: ((droplet_directory_key))
     
 - type: remove
@@ -154,7 +154,7 @@
 - type: replace
   path: /instance_groups/name=scheduler/jobs/name=cloud_controller_clock/properties/cc/packages/connection_config?
   value:
-    google_json_key_string: 
+    google_json_key_string: ((gcs_service_account_json_key))
     bucket_name: ((app_package_directory_key))
 - type: remove
   path: /instance_groups/name=scheduler/jobs/name=cloud_controller_clock/properties/cc/packages/fog_connection?
@@ -168,7 +168,7 @@
 - type: replace
   path: /instance_groups/name=scheduler/jobs/name=cloud_controller_clock/properties/cc/resource_pool/connection_config?
   value:
-    google_json_key_string: 
+    google_json_key_string: ((gcs_service_account_json_key))
     bucket_name: ((resource_directory_key))
 - type: remove
   path: /instance_groups/name=scheduler/jobs/name=cloud_controller_clock/properties/cc/resource_pool/fog_connection?
