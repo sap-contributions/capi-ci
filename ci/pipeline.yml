@@ -1150,6 +1150,8 @@ jobs:
             cf-deployment-operations/seed-uaa-asg.yml
             cf-deployment-operations/tag-bbl-env.yml
             cf-deployment-operations/use-azure-storage-cli.yml
+            cf-deployment-operations/configure-blobstore-benchmark-fog-errand.yml
+            cf-deployment-operations/configure-blobstore-benchmark-storage-cli-errand.yml
       - task: deploy
         file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
         input_mapping:
@@ -1168,6 +1170,8 @@ jobs:
             base-ops-files/operations/use-postgres.yml
             base-ops-files/operations/use-external-blobstore.yml
             use-azure-storage-cli.yml
+            configure-blobstore-benchmark-fog-errand.yml
+            configure-blobstore-benchmark-storag-cli-errand.yml
             use-latest-capi.yml
             scale-up-cells-large.yml
             scale-generic-worker-processes.yml
@@ -1184,6 +1188,35 @@ jobs:
           cats-integration-config: scar-psql-integration-configs
         params:
           CONFIG_FILE_PATH: scar-psql/cats_integration_config.json
+  - name: scar-psql-blobstore-benchmarks
+    serial: true
+    plan:
+      - in_parallel:
+          - get: capi-ci
+          - get: runtime-ci
+          - get: scar-psql-bbl-state
+            passed: [scar-psql-deploy-cf]
+          - get: scar-psql-integration-configs
+            passed: [scar-psql-deploy-cf]
+
+      - task: run-blobstore-benchmarks-fog
+        file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
+        input_mapping:
+          capi-ci-private: scar-psql-bbl-state
+        params:
+          BBL_STATE_DIR: scar-psql/bbl-state
+          BOSH_DEPLOYMENT_NAME: cf
+          ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
+          ERRAND_FOG: blobstore-benchmark-fog
+      - task: run-blobstore-benchmarks-storage-cli
+        file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
+        input_mapping:
+          capi-ci-private: scar-psql-bbl-state
+        params:
+          BBL_STATE_DIR: scar-psql/bbl-state
+          BOSH_DEPLOYMENT_NAME: cf
+          ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
+          ERRAND_FOG: blobstore-benchmark-fog
   - name: gyro-exp-deploy-cf
     serial: true
     plan:
@@ -1716,13 +1749,13 @@ jobs:
           - get: capi-release
             resource: capi-release-develop
             passed:
-              - scar-psql-deploy-cf
+              - scar-psql-blobstore-benchmarks
             trigger: true
             params:
               submodules: none
           - get: capi-release-tarball
             passed:
-              - scar-psql-deploy-cf
+              - scar-psql-blobstore-benchmarks
           - get: cf-deployment-concourse-tasks
           - get: scar-psql-integration-configs
           - get: scar-psql-bbl-state

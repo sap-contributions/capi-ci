@@ -12,4 +12,5 @@ run:
 params:
   BBL_STATE_DIR: ~
   BOSH_DEPLOYMENT_NAME: ~
-  BOSH_API_INSTANCE: ~
+  ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
+  ERRAND_FOG: blobstore-benchmark-fog
