@@ -1191,14 +1191,16 @@ jobs:
           - get: scar-psql-integration-configs
             passed: [scar-psql-deploy-cf]
 
-      - task: ensure-api-healthy
-        file: runtime-ci/tasks/ensure-api-healthy/task.yml
+      - task: run-blobstore-benchmarks-fog
+        file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
         input_mapping:
-          cats-integration-config: scar-psql-integration-configs
+          capi-ci-private: scar-psql-bbl-state
         params:
-          CONFIG_FILE_PATH: scar-psql/cats_integration_config.json
-
-      - task: run-blobstore-benchmarks
+          BBL_STATE_DIR: scar-psql/bbl-state
+          BOSH_DEPLOYMENT_NAME: cf
+          ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
+          ERRAND_FOG: blobstore-benchmark-fog
+      - task: run-blobstore-benchmarks-storage-cli
         file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
         input_mapping:
           capi-ci-private: scar-psql-bbl-state
