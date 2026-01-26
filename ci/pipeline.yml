@@ -32,6 +32,7 @@ groups:
       - olaf-mysql-deploy-cf
       - scar-psql-deploy-cf
       - gyro-exp-deploy-cf
+      - scar-psql-blobstore-benchmarks
       - elsa-ha-tests
       - kiki-mig-tests
       - asha-mysql-tests
@@ -1192,13 +1193,20 @@ jobs:
     serial: true
     plan:
       - in_parallel:
+          - get: capi-release
+            resource: capi-release-develop
+            passed:
+              - scar-psql-deploy-cf
+            trigger: true
+            params:
+              submodules: none
+          - get: capi-release-tarball
+            passed:
+              - scar-psql-deploy-cf
           - get: capi-ci
           - get: runtime-ci
           - get: scar-psql-bbl-state
-            passed: [scar-psql-deploy-cf]
           - get: scar-psql-integration-configs
-            passed: [scar-psql-deploy-cf]
-
       - task: run-blobstore-benchmarks-fog
         file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
         input_mapping:
