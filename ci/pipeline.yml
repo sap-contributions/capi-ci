@@ -1893,6 +1893,9 @@ jobs:
   - name: elsa-ha-blobstore-benchmarks
     serial: true
     plan:
+      - get: elsa-ha-pool
+        params:
+          acquire: true
       - in_parallel:
           - get: capi-release
             resource: capi-release-develop
@@ -1908,6 +1911,7 @@ jobs:
           - get: runtime-ci
           - get: elsa-ha-bbl-state
           - get: elsa-ha-integration-configs
+          - get: cf-deployment-concourse-tasks
       - task: run-blobstore-benchmarks
         file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
         input_mapping:
@@ -1932,6 +1936,9 @@ jobs:
   - name: olaf-mysql-blobstore-benchmarks
     serial: true
     plan:
+      - get: olaf-mysql-pool
+        params:
+          acquire: true
       - in_parallel:
           - get: capi-release
             resource: capi-release-develop
@@ -1947,6 +1954,7 @@ jobs:
           - get: runtime-ci
           - get: olaf-mysql-bbl-state
           - get: olaf-mysql-integration-configs
+          - get: cf-deployment-concourse-tasks
       - task: run-blobstore-benchmarks-fog
         file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
         input_mapping:
@@ -1970,6 +1978,9 @@ jobs:
   - name: scar-psql-blobstore-benchmarks
     serial: true
     plan:
+      - get: scar-psql-pool
+        params:
+          acquire: true
       - in_parallel:
           - get: capi-release
             resource: capi-release-develop
@@ -1985,6 +1996,7 @@ jobs:
           - get: runtime-ci
           - get: scar-psql-bbl-state
           - get: scar-psql-integration-configs
+          - get: cf-deployment-concourse-tasks
       - task: run-blobstore-benchmarks
         file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
         input_mapping:
