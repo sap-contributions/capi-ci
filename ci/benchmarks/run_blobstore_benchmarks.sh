@@ -18,10 +18,16 @@ run_errand() {
   bosh -d "${BOSH_DEPLOYMENT_NAME}" run-errand "${errand}"
 }
 
+# Skip storage-cli benchmarks if SKIP_STORAGE_CLI is set to true, can be reverted once s3 is configured in storage-cli
+: "${SKIP_STORAGE_CLI:=false}"
+
 perform_blobstore_benchmarks() {
   echo "Performing blobstore benchmarks via errands..."
-  # Run serially to avoid interference
-  run_errand "${ERRAND_STORAGE_CLI}"
+  if [ "${SKIP_STORAGE_CLI}" != "true" ]; then
+    run_errand "${ERRAND_STORAGE_CLI}"
+  else
+    echo "Skipping storage-cli errand"
+  fi
   run_errand "${ERRAND_FOG}"
 }
 

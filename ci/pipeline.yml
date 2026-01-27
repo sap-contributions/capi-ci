@@ -2007,6 +2007,7 @@ jobs:
           BOSH_DEPLOYMENT_NAME: cf
           ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
           ERRAND_FOG: blobstore-benchmark-fog
+          SKIP_STORAGE_CLI: "true"
       - task: run-blobstore-benchmarks-storage-cli
         file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
         input_mapping:
