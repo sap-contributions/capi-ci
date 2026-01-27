@@ -803,6 +803,8 @@ jobs:
             cf-deployment-operations/disable-skip-cert-verify.yml
             cf-deployment-operations/disable-skip-cert-verify-iso-seg.yml
             cf-deployment-operations/tag-bbl-env.yml
+            cf-deployment-operations/configure-blobstore-benchmark-fog-errand-gcs.yml
+            cf-deployment-operations/configure-blobstore-benchmark-storage-cli-errand.yml
             cf-deployment-operations/use-gcs-storage-cli.yml
       - task: deploy
         file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
@@ -834,6 +836,8 @@ jobs:
             disable-skip-cert-verify.yml
             disable-skip-cert-verify-iso-seg.yml
             tag-bbl-env.yml
+            configure-blobstore-benchmark-fog-errand-gcs.yml
+            configure-blobstore-benchmark-storage-cli-errand.yml
           VARS_FILES: |
             elsa-ha/gcs-storage-vars.yml
       - task: ensure-api-healthy
@@ -842,6 +846,42 @@ jobs:
           cats-integration-config: elsa-ha-integration-configs
         params:
           CONFIG_FILE_PATH: elsa-ha/cats_integration_config.json
+  - name: elsa-ha-blobstore-benchmarks
+    serial: true
+    plan:
+      - in_parallel:
+          - get: capi-release
+            resource: capi-release-develop
+            passed:
+              - elsa-ha-deploy-cf
+            trigger: true
+            params:
+              submodules: none
+          - get: capi-release-tarball
+            passed:
+              - elsa-ha-deploy-cf
+          - get: capi-ci
+          - get: runtime-ci
+          - get: elsa-ha-bbl-state
+          - get: elsa-ha-integration-configs
+      - task: run-blobstore-benchmarks-fog
+        file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
+        input_mapping:
+          capi-ci-private: elsa-ha-bbl-state
+        params:
+          BBL_STATE_DIR: elsa-ha/bbl-state
+          BOSH_DEPLOYMENT_NAME: cf
+          ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
+          ERRAND_FOG: blobstore-benchmark-fog
+      - task: run-blobstore-benchmarks-storage-cli
+        file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
+        input_mapping:
+          capi-ci-private: elsa-ha-bbl-state
+        params:
+          BBL_STATE_DIR: elsa-ha/bbl-state
+          BOSH_DEPLOYMENT_NAME: cf
+          ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
+          ERRAND_FOG: blobstore-benchmark-fog
   - name: kiki-mig-deploy-cf
     serial: true
     plan:
@@ -1173,7 +1213,7 @@ jobs:
             base-ops-files/operations/use-external-blobstore.yml
             use-azure-storage-cli.yml
             configure-blobstore-benchmark-fog-errand.yml
-            configure-blobstore-benchmark-storag-cli-errand.yml
+            configure-blobstore-benchmark-storage-cli-errand.yml
             use-latest-capi.yml
             scale-up-cells-large.yml
             scale-generic-worker-processes.yml
@@ -1313,13 +1353,13 @@ jobs:
           - get: capi-release
             resource: capi-release-develop
             passed:
-              - elsa-ha-deploy-cf
+              - elsa-ha-blobstore-benchmarks
             trigger: true
             params:
               submodules: none
           - get: capi-release-tarball
             passed:
-              - elsa-ha-deploy-cf
+              - elsa-ha-blobstore-benchmarks
           - get: cf-deployment-concourse-tasks
           - get: elsa-ha-integration-configs
           - get: elsa-ha-bbl-state
