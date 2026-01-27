@@ -1381,12 +1381,6 @@ jobs:
               USE_CREDHUB: true
               RUN_REVISIONS_TESTS: true
               FLAKE_ATTEMPTS: 2
-        - task: run-blobstore-benchmarks
-          file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
-          input_mapping:
-            capi-ci-private: elsa-ha-bbl-state
-          params:
-            BBL_STATE_DIR: elsa-ha/bbl-state
         ensure:
           do:
             - task: delete-deployment
@@ -1707,12 +1701,6 @@ jobs:
                 USE_CREDHUB: true
                 RUN_REVISIONS_TESTS: true
                 FLAKE_ATTEMPTS: 2
-        - task: run-blobstore-benchmarks
-          file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
-          input_mapping:
-            capi-ci-private: olaf-mysql-bbl-state
-          params:
-            BBL_STATE_DIR: olaf-mysql/bbl-state
         ensure:
           do:
             - task: delete-deployment
@@ -1819,12 +1807,6 @@ jobs:
                 USE_CREDHUB: true
                 RUN_REVISIONS_TESTS: true
                 FLAKE_ATTEMPTS: 2
-        - task: run-blobstore-benchmarks
-          file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
-          input_mapping:
-            capi-ci-private: scar-psql-bbl-state
-          params:
-            BBL_STATE_DIR: scar-psql/bbl-state
         ensure:
           do:
             - task: delete-deployment
@@ -2007,7 +1989,6 @@ jobs:
           BOSH_DEPLOYMENT_NAME: cf
           ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
           ERRAND_FOG: blobstore-benchmark-fog
-          SKIP_STORAGE_CLI: "true"
       - task: run-blobstore-benchmarks-storage-cli
         file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
         input_mapping:
@@ -2015,7 +1996,6 @@ jobs:
         params:
           BBL_STATE_DIR: olaf-mysql/bbl-state
           BOSH_DEPLOYMENT_NAME: cf
-          ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
           ERRAND_FOG: blobstore-benchmark-fog
   - name: scar-psql-blobstore-benchmarks
     serial: true

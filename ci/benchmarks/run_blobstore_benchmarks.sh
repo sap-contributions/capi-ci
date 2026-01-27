@@ -2,8 +2,6 @@
 set -eu
 
 : "${BOSH_DEPLOYMENT_NAME:="cf"}"
-: "${ERRAND_STORAGE_CLI:="blobstore-benchmark-storage-cli"}"
-: "${ERRAND_FOG:="blobstore-benchmark-fog"}"
 
 setup_bbl_environment() {
   pushd "capi-ci-private/${BBL_STATE_DIR}" > /dev/null
@@ -18,17 +16,20 @@ run_errand() {
   bosh -d "${BOSH_DEPLOYMENT_NAME}" run-errand "${errand}"
 }
 
-# Skip storage-cli benchmarks if SKIP_STORAGE_CLI is set to true, can be reverted once s3 is configured in storage-cli
-: "${SKIP_STORAGE_CLI:=false}"
-
 perform_blobstore_benchmarks() {
   echo "Performing blobstore benchmarks via errands..."
-  if [ "${SKIP_STORAGE_CLI}" != "true" ]; then
+
+  if [ -n "${ERRAND_STORAGE_CLI:-}" ]; then
     run_errand "${ERRAND_STORAGE_CLI}"
   else
-    echo "Skipping storage-cli errand"
+    echo "Skipping storage-cli errand (ERRAND_STORAGE_CLI not set)"
   fi
-  run_errand "${ERRAND_FOG}"
+
+  if [ -n "${ERRAND_FOG:-}" ]; then
+    run_errand "${ERRAND_FOG}"
+  else
+    echo "Skipping fog errand (ERRAND_FOG not set)"
+  fi
 }
 
 main() {
