@@ -32,6 +32,8 @@ groups:
       - olaf-mysql-deploy-cf
       - scar-psql-deploy-cf
       - gyro-exp-deploy-cf
+      - elsa-ha-blobstore-benchmarks
+      - olaf-mysql-blobstore-benchmarks
       - scar-psql-blobstore-benchmarks
       - elsa-ha-tests
       - kiki-mig-tests
@@ -1061,6 +1063,8 @@ jobs:
             cf-deployment-operations/seed-credhub-asg.yml
             cf-deployment-operations/seed-uaa-asg.yml
             cf-deployment-operations/tag-bbl-env.yml
+            cf-deployment-operations/configure-blobstore-benchmark-fog-errand-s3.yml
+            cf-deployment-operations/configure-blobstore-benchmark-storage-cli-errand-s3.yml
       - task: deploy
         file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
         input_mapping:
@@ -1087,6 +1091,8 @@ jobs:
             base-ops-files/operations/test/speed-up-dynamic-asgs.yml
             seed-uaa-asg.yml
             tag-bbl-env.yml
+            configure-blobstore-benchmark-fog-errand-s3.yml
+            configure-blobstore-benchmark-storage-cli-errand-s3.yml
           VARS_FILES: |
             olaf-mysql/bbl-state/vars/director-vars-file.yml
       - task: ensure-api-healthy
@@ -1095,6 +1101,42 @@ jobs:
           cats-integration-config: olaf-mysql-integration-configs
         params:
           CONFIG_FILE_PATH: olaf-mysql/cats_integration_config.json
+  - name: olaf-mysql-blobstore-benchmarks
+    serial: true
+    plan:
+      - in_parallel:
+          - get: capi-release
+            resource: capi-release-develop
+            passed:
+              - olaf-mysql-deploy-cf
+            trigger: true
+            params:
+              submodules: none
+          - get: capi-release-tarball
+            passed:
+              - olaf-mysql-deploy-cf
+          - get: capi-ci
+          - get: runtime-ci
+          - get: olaf-mysql-bbl-state
+          - get: olaf-mysql-integration-configs
+      - task: run-blobstore-benchmarks-fog
+        file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
+        input_mapping:
+          capi-ci-private: olaf-mysql-bbl-state
+        params:
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+          BOSH_DEPLOYMENT_NAME: cf
+          ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
+          ERRAND_FOG: blobstore-benchmark-fog
+      - task: run-blobstore-benchmarks-storage-cli
+        file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
+        input_mapping:
+          capi-ci-private: olaf-mysql-bbl-state
+        params:
+          BBL_STATE_DIR: olaf-mysql/bbl-state
+          BOSH_DEPLOYMENT_NAME: cf
+          ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
+          ERRAND_FOG: blobstore-benchmark-fog
   - name: scar-psql-deploy-cf
     serial: true
     plan:
@@ -1646,13 +1688,13 @@ jobs:
           - get: capi-release
             resource: capi-release-develop
             passed:
-              - olaf-mysql-deploy-cf
+              - olaf-mysql-blobstore-benchmarks
             trigger: true
             params:
               submodules: none
           - get: capi-release-tarball
             passed:
-              - olaf-mysql-deploy-cf
+              - olaf-mysql-blobstore-benchmarks
           - get: cf-deployment-concourse-tasks
           - get: olaf-mysql-integration-configs
           - get: olaf-mysql-bbl-state
