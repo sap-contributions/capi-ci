@@ -2,8 +2,6 @@
 set -eu
 
 : "${BOSH_DEPLOYMENT_NAME:="cf"}"
-: "${ERRAND_STORAGE_CLI:="blobstore-benchmark-storage-cli"}"
-: "${ERRAND_FOG:="blobstore-benchmark-fog"}"
 
 setup_bbl_environment() {
   pushd "capi-ci-private/${BBL_STATE_DIR}" > /dev/null
@@ -20,9 +18,18 @@ run_errand() {
 
 perform_blobstore_benchmarks() {
   echo "Performing blobstore benchmarks via errands..."
-  # Run serially to avoid interference
-  run_errand "${ERRAND_STORAGE_CLI}"
-  run_errand "${ERRAND_FOG}"
+
+  if [ -n "${ERRAND_STORAGE_CLI:-}" ]; then
+    run_errand "${ERRAND_STORAGE_CLI}"
+  else
+    echo "Skipping storage-cli errand (ERRAND_STORAGE_CLI not set)"
+  fi
+
+  if [ -n "${ERRAND_FOG:-}" ]; then
+    run_errand "${ERRAND_FOG}"
+  else
+    echo "Skipping fog errand (ERRAND_FOG not set)"
+  fi
 }
 
 main() {

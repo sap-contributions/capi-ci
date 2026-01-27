@@ -1381,24 +1381,6 @@ jobs:
               USE_CREDHUB: true
               RUN_REVISIONS_TESTS: true
               FLAKE_ATTEMPTS: 2
-        - task: run-blobstore-benchmarks
-          file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
-          input_mapping:
-            capi-ci-private: elsa-ha-bbl-state
-          params:
-            BBL_STATE_DIR: elsa-ha/bbl-state
-        ensure:
-          do:
-            - task: delete-deployment
-              file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
-              input_mapping:
-                bbl-state: elsa-ha-bbl-state
-              params:
-                BBL_STATE_DIR: elsa-ha/bbl-state
-                IGNORE_ERRORS: true
-            - put: elsa-ha-pool
-              params:
-                release: elsa-ha-pool
   - name: kiki-mig-tests
     serial: true
     plan:
@@ -1707,24 +1689,6 @@ jobs:
                 USE_CREDHUB: true
                 RUN_REVISIONS_TESTS: true
                 FLAKE_ATTEMPTS: 2
-        - task: run-blobstore-benchmarks
-          file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
-          input_mapping:
-            capi-ci-private: olaf-mysql-bbl-state
-          params:
-            BBL_STATE_DIR: olaf-mysql/bbl-state
-        ensure:
-          do:
-            - task: delete-deployment
-              file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
-              input_mapping:
-                bbl-state: olaf-mysql-bbl-state
-              params:
-                BBL_STATE_DIR: olaf-mysql/bbl-state
-                IGNORE_ERRORS: true
-            - put: olaf-mysql-pool
-              params:
-                release: olaf-mysql-pool
   - name: scar-psql-tests
     serial: true
     plan:
@@ -1819,24 +1783,6 @@ jobs:
                 USE_CREDHUB: true
                 RUN_REVISIONS_TESTS: true
                 FLAKE_ATTEMPTS: 2
-        - task: run-blobstore-benchmarks
-          file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
-          input_mapping:
-            capi-ci-private: scar-psql-bbl-state
-          params:
-            BBL_STATE_DIR: scar-psql/bbl-state
-        ensure:
-          do:
-            - task: delete-deployment
-              file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
-              input_mapping:
-                bbl-state: scar-psql-bbl-state
-              params:
-                BBL_STATE_DIR: scar-psql/bbl-state
-                IGNORE_ERRORS: true
-            - put: scar-psql-pool
-              params:
-                release: scar-psql-pool
   - name: gyro-exp-tests
     serial: true
     plan:
@@ -1962,24 +1908,27 @@ jobs:
           - get: runtime-ci
           - get: elsa-ha-bbl-state
           - get: elsa-ha-integration-configs
-      - task: run-blobstore-benchmarks-fog
+      - task: run-blobstore-benchmarks
         file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
         input_mapping:
           capi-ci-private: elsa-ha-bbl-state
         params:
           BBL_STATE_DIR: elsa-ha/bbl-state
           BOSH_DEPLOYMENT_NAME: cf
-          ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
           ERRAND_FOG: blobstore-benchmark-fog
-      - task: run-blobstore-benchmarks-storage-cli
-        file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
-        input_mapping:
-          capi-ci-private: elsa-ha-bbl-state
-        params:
-          BBL_STATE_DIR: elsa-ha/bbl-state
-          BOSH_DEPLOYMENT_NAME: cf
           ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
-          ERRAND_FOG: blobstore-benchmark-fog
+    ensure:
+      do:
+        - task: delete-deployment
+          file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+          input_mapping:
+            bbl-state: elsa-ha-bbl-state
+          params:
+            BBL_STATE_DIR: elsa-ha/bbl-state
+            IGNORE_ERRORS: true
+        - put: elsa-ha-pool
+          params:
+            release: elsa-ha-pool
   - name: olaf-mysql-blobstore-benchmarks
     serial: true
     plan:
@@ -2005,17 +1954,19 @@ jobs:
         params:
           BBL_STATE_DIR: olaf-mysql/bbl-state
           BOSH_DEPLOYMENT_NAME: cf
-          ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
           ERRAND_FOG: blobstore-benchmark-fog
-      - task: run-blobstore-benchmarks-storage-cli
-        file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
-        input_mapping:
-          capi-ci-private: olaf-mysql-bbl-state
-        params:
-          BBL_STATE_DIR: olaf-mysql/bbl-state
-          BOSH_DEPLOYMENT_NAME: cf
-          ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
-          ERRAND_FOG: blobstore-benchmark-fog
+    ensure:
+      do:
+        - task: delete-deployment
+          file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+          input_mapping:
+            bbl-state: olaf-mysql-bbl-state
+          params:
+            BBL_STATE_DIR: olaf-mysql/bbl-state
+            IGNORE_ERRORS: true
+        - put: olaf-mysql-pool
+          params:
+            release: olaf-mysql-pool
   - name: scar-psql-blobstore-benchmarks
     serial: true
     plan:
@@ -2034,24 +1985,27 @@ jobs:
           - get: runtime-ci
           - get: scar-psql-bbl-state
           - get: scar-psql-integration-configs
-      - task: run-blobstore-benchmarks-fog
+      - task: run-blobstore-benchmarks
         file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
         input_mapping:
           capi-ci-private: scar-psql-bbl-state
         params:
           BBL_STATE_DIR: scar-psql/bbl-state
           BOSH_DEPLOYMENT_NAME: cf
-          ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
           ERRAND_FOG: blobstore-benchmark-fog
-      - task: run-blobstore-benchmarks-storage-cli
-        file: capi-ci/ci/benchmarks/run_blobstore_benchmarks.yml
-        input_mapping:
-          capi-ci-private: scar-psql-bbl-state
-        params:
-          BBL_STATE_DIR: scar-psql/bbl-state
-          BOSH_DEPLOYMENT_NAME: cf
           ERRAND_STORAGE_CLI: blobstore-benchmark-storage-cli
-          ERRAND_FOG: blobstore-benchmark-fog
+    ensure:
+      do:
+        - task: delete-deployment
+          file: cf-deployment-concourse-tasks/bosh-delete-deployment/task.yml
+          input_mapping:
+            bbl-state: scar-psql-bbl-state
+          params:
+            BBL_STATE_DIR: scar-psql/bbl-state
+            IGNORE_ERRORS: true
+        - put: scar-psql-pool
+          params:
+            release: scar-psql-pool
   - name: bump-ci-passed
     serial: true
     plan:
