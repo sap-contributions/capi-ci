@@ -819,7 +819,6 @@ jobs:
             base-ops-files/operations/windows2019-cell.yml
             base-ops-files/operations/use-online-windows2019fs.yml
             base-ops-files/operations/use-external-blobstore.yml
-            base-ops-files/operations/use-gcs-blobstore-service-account.yml
             base-ops-files/operations/use-compiled-releases.yml
             base-ops-files/operations/experimental/use-compiled-releases-windows.yml
             use-gcs-storage-cli.yml
