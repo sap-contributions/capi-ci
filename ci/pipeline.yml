@@ -2025,11 +2025,11 @@ jobs:
           - get: capi-release
             resource: capi-release-develop
             passed:
-              - elsa-ha-blobstore-benchmarks
+              - elsa-ha-tests
               - kiki-mig-tests
               - asha-mysql-tests
-              - olaf-mysql-blobstore-benchmarks
-              - scar-psql-blobstore-benchmarks
+              - olaf-mysql-tests
+              - scar-psql-tests
               - gyro-exp-tests
             trigger: true
             params:
