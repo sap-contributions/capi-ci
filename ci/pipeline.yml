@@ -552,6 +552,7 @@ jobs:
         attempts: 3
         file: capi-ci/ci/test-unit/run_capi_release_config_template_tests.yml
   - name: cc-unit-tests
+    serial: true
     plan:
       - in_parallel:
           - get: cloud_controller_ng
